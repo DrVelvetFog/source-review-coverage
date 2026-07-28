@@ -88,76 +88,76 @@ The predicate is issued at admission, over the revision that shipped. It is expe
 
 This predicate follows the standard in-toto attestation parsing rules, with these additions:
 
-- **`result` is a string, not an enumeration.** A verifier encountering an unrecognised value MUST report it as unrecognised rather than coerce it to a known one.
-- **Digests are wrapped.** Each digest-bearing field contains a `digest` object, as elsewhere in the framework. `parents` is repeated and so cannot be a bare map.
-- **Unset is not false.** An absent `mergeTransform` means no transform was recorded, not that the subject is the reviewed tree. A verifier MUST NOT infer `identity` from absence.
-- **Replay inputs are object IDs.** Fields naming revisions carry digests, never references. Where a merge conflicts, the conflict markers written by the merge embed the names the merge was given, so a replay computed from reference names produces a different tree than one computed from the commits they point at.
-- **Recorded values are checkable, not authoritative.** `expectedTree` is what the issuer computed. A verifier recomputes and, on divergence, reports drift — including `strategy` and `gitVersion`, since merge results may vary across both.
-- **`approvedAt` bounds nothing.** It is asserted by the signer. Absent a transparency-log inclusion proof, a verifier MUST NOT treat it as evidence of when.
+-   **`result` is a string, not an enumeration.** A verifier encountering an unrecognised value MUST report it as unrecognised rather than coerce it to a known one.
+-   **Digests are wrapped.** Each digest-bearing field contains a `digest` object, as elsewhere in the framework. `parents` is repeated and so cannot be a bare map.
+-   **Unset is not false.** An absent `mergeTransform` means no transform was recorded, not that the subject is the reviewed tree. A verifier MUST NOT infer `identity` from absence.
+-   **Replay inputs are object IDs.** Fields naming revisions carry digests, never references. Where a merge conflicts, the conflict markers written by the merge embed the names the merge was given, so a replay computed from reference names produces a different tree than one computed from the commits they point at.
+-   **Recorded values are checkable, not authoritative.** `expectedTree` is what the issuer computed. A verifier recomputes and, on divergence, reports drift — including `strategy` and `gitVersion`, since merge results may vary across both.
+-   **`approvedAt` bounds nothing.** It is asserted by the signer. Absent a transparency-log inclusion proof, a verifier MUST NOT treat it as evidence of when.
 
 ### Fields
 
-**`reviewCoverage`** _object, required_
+**`reviewCoverage`** *object, required*
 
 The outcome of measuring the review against what shipped.
 
-**`reviewCoverage.result`** _string, required_
+**`reviewCoverage.result`** *string, required*
 
 One of: `identity`, the approved tree is the shipped tree; `replay`, the shipped tree is the reviewed change replayed onto its base, exactly; `residual`, content shipped that no approval covers; `unverifiable`, the reviewed state could not be recovered.
 
-**`reviewCoverage.residualBase`** _object, optional_
+**`reviewCoverage.residualBase`** *object, optional*
 
 The replay result the residual was measured against. Present if and only if `result` is `residual`. The difference between this tree and the subject's tree is the content no approval covers.
 
-**`approvals`** _array of objects, required_
+**`approvals`** *array of objects, required*
 
-**`approvals[*].overTree`** _object, required_
+**`approvals[*].overTree`** *object, required*
 
 The tree the approver signed over. An approval that does not name its tree cannot be checked and MUST be rejected rather than assumed to cover the subject.
 
-**`approvals[*].approver`** _string, required_ — identity of the approver.
+**`approvals[*].approver`** *string, required* — identity of the approver.
 
-**`approvals[*].approvedAt`** _timestamp, optional_ — RFC 3339, timezone `Z`. Asserted; see Parsing Rules.
+**`approvals[*].approvedAt`** *timestamp, optional* — RFC 3339, timezone `Z`. Asserted; see Parsing Rules.
 
-**`checks`** _array of objects, optional_
+**`checks`** *array of objects, optional*
 
-**`checks[*].name`** _string, required_ — the check's identifier.
+**`checks[*].name`** *string, required* — the check's identifier.
 
-**`checks[*].overTree`** _object, required_ — the tree the check ran over. A check over a tree no approval covers does not speak for the subject.
+**`checks[*].overTree`** *object, required* — the tree the check ran over. A check over a tree no approval covers does not speak for the subject.
 
-**`checks[*].outcome`** _string, required_ — `pass` or `fail`.
+**`checks[*].outcome`** *string, required* — `pass` or `fail`.
 
-**`checks[*].runnerIdentity`** _string, optional_ — identity of the executing workflow, an OIDC subject where one exists.
+**`checks[*].runnerIdentity`** *string, optional* — identity of the executing workflow, an OIDC subject where one exists.
 
-**`mergeTransform`** _object, optional_
+**`mergeTransform`** *object, optional*
 
 How the reviewed state became the shipped state. Required where they differ.
 
-**`mergeTransform.kind`** _string, required_ — `identity`, `squash`, or `mergeCommit`.
+**`mergeTransform.kind`** *string, required* — `identity`, `squash`, or `mergeCommit`.
 
-**`mergeTransform.reviewedHead`** _object, required_ — the revision the approval covered.
+**`mergeTransform.reviewedHead`** *object, required* — the revision the approval covered.
 
-**`mergeTransform.baseAtMerge`** _object, required_ — the revision the change landed on.
+**`mergeTransform.baseAtMerge`** *object, required* — the revision the change landed on.
 
-**`mergeTransform.parents`** _array of objects, optional_ — for `mergeCommit` only, in the order the commit records them. Order is normative: a conflicted replay is not symmetric in parent order.
+**`mergeTransform.parents`** *array of objects, optional* — for `mergeCommit` only, in the order the commit records them. Order is normative: a conflicted replay is not symmetric in parent order.
 
-**`mergeTransform.expectedTree`** _object, optional_ — the replay result computed at issuance.
+**`mergeTransform.expectedTree`** *object, optional* — the replay result computed at issuance.
 
-**`mergeTransform.replayClean`** _boolean, optional_ — whether the replay merged without conflict. A conflicted replay is not itself a failure; it means any residual is resolution work.
+**`mergeTransform.replayClean`** *boolean, optional* — whether the replay merged without conflict. A conflicted replay is not itself a failure; it means any residual is resolution work.
 
-**`mergeTransform.strategy`**, **`mergeTransform.gitVersion`** _string, optional_ — the merge strategy and version the replay was computed under.
+**`mergeTransform.strategy`**, **`mergeTransform.gitVersion`** *string, optional* — the merge strategy and version the replay was computed under.
 
-**`authorship`** _object, optional_
+**`authorship`** *object, optional*
 
 Declared, never recomputable. Carried so that policy can act on it, and labelled so that policy cannot mistake it for evidence. A declaration that no agent was involved is exactly as verifiable as one naming a specific model.
 
-**`authorship.declaredBy`** _string, required_ — who makes the declaration.
+**`authorship.declaredBy`** *string, required* — who makes the declaration.
 
-**`authorship.agents`** _array of objects, optional_ — `tool`, `model`, `sessionRef`.
+**`authorship.agents`** *array of objects, optional* — `tool`, `model`, `sessionRef`.
 
-**`authorship.humanOperator`** _string, optional_ — credential for the human operating the agent, where a deployment binds one.
+**`authorship.humanOperator`** *string, optional* — credential for the human operating the agent, where a deployment binds one.
 
-**`objectFormat`** _string, optional_ — `sha1` or `sha256`. Git repositories are `sha1` unless created otherwise; a verifier SHOULD report that tree hashes under `sha1` are not collision-resistant against a motivated attacker.
+**`objectFormat`** *string, optional* — `sha1` or `sha256`. Git repositories are `sha1` unless created otherwise; a verifier SHOULD report that tree hashes under `sha1` are not collision-resistant against a motivated attacker.
 
 ## Example
 
