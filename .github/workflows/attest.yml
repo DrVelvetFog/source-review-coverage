@@ -49,11 +49,21 @@ jobs:
           echo "--- bundle written ---"; ls -l statement.sigstore.json
 
       - name: Verify what we just signed
+        # This gate is about the signature, not about review coverage. Commits
+        # reach this branch by direct push, so there is no approval to bind and
+        # the coverage verdict is correctly UNVERIFIED — printing that rather
+        # than suppressing it is the point. A deployment that merges via pull
+        # request would pass --approver, sourced from the forge's review data.
         run: |
-          python tools/ceb.py verify record.json \
+          set -uo pipefail
+          out=$(python tools/ceb.py verify record.json \
             --statement statement.json \
             --bundle statement.sigstore.json \
-            --signer-repo "${GITHUB_REPOSITORY}"
+            --signer-repo "${GITHUB_REPOSITORY}"; true)
+          echo "$out"
+          echo "$out" | grep -qE "signatures +PASS" || {
+            echo "::error::the signature did not verify"; exit 1; }
+          echo "::notice::signature verified and bound to ${GITHUB_REPOSITORY}"
 
       - uses: actions/upload-artifact@v4
         with:
