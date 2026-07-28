@@ -1,0 +1,64 @@
+# Issues a source-review-coverage attestation for each revision that lands on
+# main, and signs it with the workflow's own identity.
+#
+# The signer is deliberately not a developer. R4 of the specification: a record
+# signed only by the party whose work is being attested is an assertion, not
+# evidence. Keyless OIDC binds the signature to this workflow in this
+# repository, which is a thing a verifier can check and a person cannot forge
+# without controlling the repository itself.
+name: attest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # ambient OIDC — the whole point
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # replay needs history, not a shallow clone
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet sigstore
+
+      - name: Build the record and the statement
+        run: |
+          set -euo pipefail
+          # A push to main: the parent is the base, HEAD is what shipped. For a
+          # merge commit the replay inputs come from the commit's own parents.
+          python tools/ceb.py record \
+            --base "HEAD^" --reviewed-head "HEAD" --merged "HEAD" \
+            --declared-by "github-actions" \
+            > record.json
+          python tools/ceb.py intoto record.json > statement.json
+          echo "--- statement ---"; cat statement.json
+
+      - name: Sign the statement
+        run: |
+          python -m sigstore sign --bundle statement.sigstore.json statement.json
+          echo "--- bundle written ---"; ls -l statement.sigstore.json
+
+      - name: Verify what we just signed
+        run: |
+          python tools/ceb.py verify record.json \
+            --statement statement.json \
+            --bundle statement.sigstore.json \
+            --signer-repo "${GITHUB_REPOSITORY}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-review-coverage-attestation
+          path: |
+            record.json
+            statement.json
+            statement.sigstore.json
