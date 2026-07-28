@@ -1,0 +1,145 @@
+// Copyright 2026 UIG Studios LLC
+// SPDX-License-Identifier: Apache-2.0
+//
+// Predicate: Source Review Coverage
+// https://drvelvetfog.github.io/source-review-coverage/v0.1
+//
+// Evidence that a source revision was covered by review: which tree each
+// approval covered, which tree shipped, and — where those differ because the
+// base moved — whether the shipped tree is the reviewed change replayed onto
+// its base exactly. Supplies the verification mechanism that SLSA v1.2 Source
+// Track requires ("the final revision submitted") but leaves undefined.
+//
+// Proto field names are snake_case; proto3 JSON mapping renders them as the
+// lowerCamelCase the attestation framework expects.
+
+syntax = "proto3";
+
+package in_toto_attestation.predicates.source_review_coverage.v0;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/in-toto/attestation/go/predicates/source_review_coverage/v0";
+
+message SourceReviewCoverage {
+  // A digest of a single git object. Digests are wrapped rather than inlined
+  // as map<string,string> because `parents` is repeated and proto3 does not
+  // permit a repeated map. The framework's ResourceDescriptor would also
+  // serve; this stays self-contained, since every digest here names a git
+  // object and nothing else.
+  message GitObject {
+    // Exactly one of the framework's git digest types:
+    // "gitCommit", "gitTree", "gitBlob", "gitTag".
+    map<string, string> digest = 1;
+  }
+
+  // The outcome of measuring the review against what shipped.
+  message Coverage {
+    // "identity"     — the approved tree IS the shipped tree
+    // "replay"       — shipped == the reviewed change replayed onto its base
+    // "residual"     — content shipped that no approval covers
+    // "unverifiable" — the reviewed state could not be recovered
+    //
+    // A string rather than an enum, so that a verifier encountering a future
+    // result does not silently coerce it to a known one.
+    string result = 1;
+
+    // The replay result the residual was measured against. Set if and only if
+    // result == "residual"; the difference between this tree and the subject's
+    // tree is the content no approval covers.
+    GitObject residual_base = 2;
+  }
+
+  message Approval {
+    // REQUIRED. The tree the approver signed over. An approval that does not
+    // name the tree it covers cannot be checked, and MUST be rejected rather
+    // than assumed to cover the subject.
+    GitObject over_tree = 1;
+
+    string approver = 2;
+
+    // Asserted by the signer. Without a transparency-log inclusion proof this
+    // bounds nothing, and a verifier MUST NOT treat it as evidence of when.
+    google.protobuf.Timestamp approved_at = 3;
+  }
+
+  message Check {
+    string name = 1;
+
+    // REQUIRED. The tree the check ran over. A check over a tree no approval
+    // covers does not speak for the subject.
+    GitObject over_tree = 2;
+
+    // "pass" | "fail"
+    string outcome = 3;
+
+    // Identity of the workflow that executed the check — an OIDC subject where
+    // one exists. A check attributed to the audited party is an assertion.
+    string runner_identity = 4;
+  }
+
+  // How the reviewed state became the shipped state.
+  message MergeTransform {
+    // "identity" | "squash" | "mergeCommit"
+    string kind = 1;
+
+    // The revision the approval covered. Under a squash workflow this is not
+    // an ancestor of the subject and may only be recoverable from retained
+    // pull references; it is recorded here as a digest so that recovery can be
+    // checked rather than trusted.
+    GitObject reviewed_head = 2;
+
+    // The revision the change landed on.
+    GitObject base_at_merge = 3;
+
+    // For kind == "mergeCommit": the parents, in the order the commit records
+    // them. Order is normative — a conflicted replay is not symmetric in
+    // parent order, because conflict markers embed the sides.
+    repeated GitObject parents = 4;
+
+    // The replay result computed at issuance, so a verifier can detect drift
+    // between what was recorded and what it recomputes.
+    GitObject expected_tree = 5;
+
+    // Whether the replay merged without conflict. A conflicted replay is not a
+    // failure by itself; it means any residual is resolution work.
+    bool replay_clean = 6;
+
+    // Merge strategy and git version the replay was computed under. Merge
+    // results can vary across both, so a verifier recomputing under different
+    // ones reports drift rather than a silent pass or fail.
+    string strategy = 7;
+    string git_version = 8;
+  }
+
+  // Declared, never recomputable. A claim that no agent was involved is
+  // exactly as verifiable as a claim naming a specific model: not at all.
+  // Carried so that policy can act on it, and labelled so that policy cannot
+  // mistake it for evidence.
+  message Authorship {
+    string declared_by = 1;
+
+    message Agent {
+      string tool = 1;
+      string model = 2;
+      string session_ref = 3;
+    }
+    repeated Agent agents = 2;
+
+    // Optional credential for the human operating the agent, where a
+    // deployment binds one.
+    string human_operator = 3;
+  }
+
+  Coverage review_coverage = 1;
+  repeated Approval approvals = 2;
+  repeated Check checks = 3;
+  MergeTransform merge_transform = 4;
+  Authorship authorship = 5;
+
+  // The repository's object format: "sha1" or "sha256". Git is sha1 unless a
+  // repository was created otherwise, and a verifier SHOULD report that tree
+  // hashes under sha1 are not collision-resistant against a motivated
+  // attacker.
+  string object_format = 6;
+}
