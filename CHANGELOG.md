@@ -32,8 +32,6 @@ lives in its type URI and changes on its own clock.
   differently, because octopus does no rename detection and `merge-tree` does. Folding
   with `-X no-renames` closes the gap on every trial; the verifier change is CE-019. By
   @kshivam4781. (#12, #24)
-### Added
-
 - The residual as a pull-request comment: when bytes shipped that no approval covers, the
   action posts one comment with the verdict, each approval and the revision it was given
   on, and the residual as a diff, truncated at a fixed size with a link to the artifact.
@@ -57,6 +55,13 @@ lives in its type URI and changes on its own clock.
   the run is failing, `success` only for `VERIFIED`, `neutral` otherwise, so branch
   protection passes without painting `UNVERIFIED` green. Needs `checks: write`.
   `tools/render_check.py`, `tests/check/`. (#11)
+- `ceb.py verify-artifact <dir>`: one command for a consumer holding a downloaded artifact
+  and a clone. Recomputes the record's claims, checks the signature and binds it to a
+  workflow identity, and checks the statement is exactly what the record produces. Exit
+  `0` verified, `1` unverified, `2` incomplete, `3` malformed. Read-only by default: the
+  replay runs in a throwaway clone that borrows the repository's objects. (#4)
+- `verify` gains a statement-binding step. (#4)
+- `tests/verify/test_verify_artifact.sh` with a real workflow-signed fixture. (#4)
 
 ### Fixed
 
@@ -75,13 +80,6 @@ lives in its type URI and changes on its own clock.
   from `v4` (Node 20, now deprecated on the runner) to `v7` (Node 24). No functional
   change; every consumer's run stops printing the deprecation warning. Self-hosted
   runners need 2.327.1 or newer. (#26)
-- `ceb.py verify-artifact <dir>`: one command for a consumer holding a downloaded artifact
-  and a clone. Recomputes the record's claims, checks the signature and binds it to a
-  workflow identity, and checks the statement is exactly what the record produces. Exit
-  `0` verified, `1` unverified, `2` incomplete, `3` malformed. Read-only by default: the
-  replay runs in a throwaway clone that borrows the repository's objects. (#4)
-- `verify` gains a statement-binding step. (#4)
-- `tests/verify/test_verify_artifact.sh` with a real workflow-signed fixture. (#4)
 
 ## [0.2.1] - 2026-09-08
 

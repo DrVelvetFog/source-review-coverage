@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # the verify-artifact fixture replays real history
       - run: git config --global user.email ci@ci && git config --global user.name ci
