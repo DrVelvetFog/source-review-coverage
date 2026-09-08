@@ -1,0 +1,12 @@
+# Every example in the README and the docs is executed in CI and attested, so a reader
+# (or an agent) can check that an example still runs instead of recalling that it did.
+name: verified-examples
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global user.email ci@ci && git config --global user.name ci
+      - run: curl -fsSL https://raw.githubusercontent.com/DrVelvetFog/verified-examples/main/xv -o xv && chmod +x xv
+      - run: ./xv check --rerun --strict

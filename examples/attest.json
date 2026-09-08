@@ -1,0 +1,65 @@
+{
+ "schema": "verified-examples/v0",
+ "attestations": [
+  {
+   "_type": "https://in-toto.io/Statement/v1",
+   "subject": [
+    {
+     "name": "examples/quickstart.sh",
+     "digest": {
+      "sha256": "a4ec45231f2d1e1a03be21a1e5ea696c1ad57c117e2be5893e6277b8870d4a69"
+     }
+    }
+   ],
+   "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
+   "predicate": {
+    "id": "quickstart",
+    "package": "source-review-coverage",
+    "version": "0.2.0",
+    "command": "bash examples/quickstart.sh",
+    "exit": 0,
+    "stdout": {
+     "sha256": "59a1183501a8f97af81cc55ebafb5ec3609a6be4dbf2858043faa5b28b11596d",
+     "bytes": 226,
+     "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
+    },
+    "ran_at": "2026-09-08T13:28:27Z",
+    "runner": {
+     "os": "darwin",
+     "python": "3.14.6",
+     "ci": false
+    }
+   }
+  },
+  {
+   "_type": "https://in-toto.io/Statement/v1",
+   "subject": [
+    {
+     "name": "tests/action/test_approvals.sh",
+     "digest": {
+      "sha256": "3045efec1e7f116dd29d7f292e25ada37668bf6a8b48c4a284f1754749de62ee"
+     }
+    }
+   ],
+   "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
+   "predicate": {
+    "id": "approval-tests",
+    "package": "source-review-coverage",
+    "version": "0.2.0",
+    "command": "bash tests/action/test_approvals.sh 2>/dev/null | tail -1",
+    "exit": 0,
+    "stdout": {
+     "sha256": "bfccd2c7b8a2e90a403b91b5b992ebce1a3deb37ec00671442849aabb8120278",
+     "bytes": 20,
+     "tail": "passed 16, failed 0\n"
+    },
+    "ran_at": "2026-09-08T13:28:33Z",
+    "runner": {
+     "os": "darwin",
+     "python": "3.14.6",
+     "ci": false
+    }
+   }
+  }
+ ]
+}

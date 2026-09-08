@@ -1,0 +1,16 @@
+{
+  "package": "source-review-coverage",
+  "version_cmd": "cat VERSION",
+  "examples": [
+    {
+      "id": "quickstart",
+      "path": "examples/quickstart.sh",
+      "command": "bash examples/quickstart.sh"
+    },
+    {
+      "id": "approval-tests",
+      "path": "tests/action/test_approvals.sh",
+      "command": "bash tests/action/test_approvals.sh 2>/dev/null | tail -1"
+    }
+  ]
+}
