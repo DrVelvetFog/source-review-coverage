@@ -7,6 +7,16 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+### Added
+
+- The residual as a pull-request comment: when bytes shipped that no approval covers, the
+  action posts one comment with the verdict, each approval and the revision it was given
+  on, and the residual as a diff, truncated at a fixed size with a link to the artifact.
+  The same comment is edited on re-runs, found by a hidden marker. Silent on clean
+  replays unless `comment: always`; `comment: never` to disable. Needs
+  `pull-requests: write`; without it the comment is rendered into the artifact and a
+  warning says why. `tools/render_comment.py`, `tests/comment/`. (#3)
+
 ## [0.2.1] - 2026-09-08
 
 ### Changed
