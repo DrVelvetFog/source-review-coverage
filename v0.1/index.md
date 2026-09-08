@@ -215,3 +215,36 @@ The reviewed tree `7a6a0ffb…` is not the shipped tree `a3e3f68f…`. Replaying
 ## Changelog and Migrations
 
 Initial version.
+
+### CE-012 — octopus replay equivalence probe (2026-09-08)
+
+`replay_merge()` in `tools/ceb.py` recomputes a recorded octopus merge commit by
+folding its parents left, pairwise, through `git merge-tree --write-tree`. Whether that
+reproduces what Git's own multi-parent `git merge` (the `octopus` strategy) would have
+produced was open — §2 of the horizon brief carried it forward unresolved. It is not
+proven in general, and `experiments/octopus_probe.sh` now falsifies it for one
+well-defined case.
+
+The probe generates random 3-to-5-parent merges — line edits, new files, deletions and
+renames, with a tunable bias toward colliding edits — and compares the native `git
+merge`'s result against the left fold, in the same parent order, on every trial the
+native strategy accepted. Findings, reproducible with `experiments/octopus_probe.sh 120
+12345`:
+
+- With renames excluded, a 60-trial control agreed on all 60 trials the native strategy
+  accepted: same clean/conflict outcome, identical resulting tree.
+- With renames allowed, 120 trials produced 74 merges the native strategy accepted, of
+  which the left fold reproduced 42 exactly and diverged on the other 32. Every one of
+  the 32 involves the same shape: two branches renaming the same source path to two
+  different destinations (a rename/rename(1:2)). Native octopus's per-parent step is a
+  plain path-based three-way merge with no rename detection, so it accepts the result as
+  two ordinary added files and one ordinary deletion — no conflict. The left fold's
+  per-parent step uses `git merge-tree`, whose content-similarity rename detection
+  reports `CONFLICT (rename/rename)` on the same input.
+
+Practical consequence: a verifier replaying a real octopus merge commit that Git itself
+produced cleanly can report a false `residual` (or an unresolved conflict) when that
+merge's parents include a rename/rename(1:2) pair, even though nothing shipped that no
+approval covers. No fix is proposed here — the probe's job was to answer the equivalence
+question, not to close the gap — but this is the shape a fix or a documented limitation
+would need to cover.
