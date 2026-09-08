@@ -31,6 +31,9 @@
       "id": "release-check",
       "path": "tools/release_check.sh",
       "command": "bash tools/release_check.sh"
+      "id": "verify-artifact-tests",
+      "path": "tests/verify/test_verify_artifact.sh",
+      "command": "bash tests/verify/test_verify_artifact.sh 2>/dev/null | tail -1"
     }
   ]
 }

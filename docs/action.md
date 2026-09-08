@@ -113,13 +113,13 @@ check run, when one was created).
 
 ```bash
 gh run download <run-id> -n source-review-coverage-attestation -D att
-python tools/ceb.py verify att/record.json --statement att/statement.json \
-    --bundle att/statement.sigstore.json --signer-repo owner/name
+python tools/ceb.py verify-artifact att --repo /path/to/clone --signer-repo owner/name
 ```
 
-Python 3 and `git`; `pip install sigstore` for the signature check. No network is needed
-for the replay. Without the `sigstore` package the verifier reports `INCOMPLETE` rather
-than passing an unchecked claim.
+One command, read-only, exit codes `0`/`1`/`2`/`3` for verified / unverified / incomplete /
+malformed. See [verify.md](verify.md). Python 3 and `git`; `pip install sigstore` for the
+signature check. Without it the verifier reports `INCOMPLETE` rather than passing an
+unchecked claim.
 
 ## What a pass does not establish
 

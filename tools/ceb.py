@@ -6,6 +6,7 @@ Two subcommands:
 
   ceb.py record --base <ref> --reviewed-head <ref> --merged <ref> [--approver ...]
   ceb.py verify <record.json> [--json]
+  ceb.py verify-artifact <dir> [--signer-repo owner/name] [--json]   # one call, read-only
 
 The verifier assumes it trusts nobody: it is given a repository and a record,
 and it recomputes. No network, no vendor API, no third-party packages. If a
@@ -545,6 +546,27 @@ def verify(record, repo=".", bundle_path=None, signer_repo=None,
         else:
             res.add("signature subject", "PASS", "signed statement covers this tree")
 
+    # statement binding: the signed statement must be exactly what this record
+    # produces, coverage recomputed. A statement about the same tree with a
+    # different claim (a better coverage result, a different approver) would
+    # otherwise ride on a valid signature.
+    if statement_path:
+        try:
+            given = json.load(open(statement_path))
+            expected_stmt = to_intoto(record)
+            result, residual_base = coverage_result(record, repo=repo, _res=res)
+            expected_stmt["predicate"]["reviewCoverage"] = {"result": result}
+            if residual_base:
+                expected_stmt["predicate"]["reviewCoverage"]["residualBase"] = {
+                    "digest": {"gitTree": residual_base}}
+            if canonical(given) == canonical(expected_stmt):
+                res.add("statement binding", "PASS", "statement is exactly what this record produces")
+            else:
+                res.add("statement binding", "FAIL",
+                        "statement differs from what this record produces (edited, or made from another record)")
+        except (OSError, ValueError) as e:
+            res.add("statement binding", "FAIL", f"statement unreadable: {e}")
+
     # digest integrity of the record itself
     stated = record.get("record_digest")
     if stated:
@@ -622,13 +644,13 @@ def to_intoto(record, subject_name="refs/heads/main"):
     }
 
 
-def coverage_result(record, repo="."):
+def coverage_result(record, repo=".", _res=None):
     """The headline field, derived from a real verification rather than asserted.
 
     Emitting a statement that claims coverage without having recomputed it
     would reproduce exactly the vendor-log problem this predicate exists to
     replace."""
-    res = verify(record, repo=repo)
+    res = _res if _res is not None else verify(record, repo=repo)
     binding = [(st, d) for step, st, d in res.steps if step == "approval binding"]
     if any(st == "PASS" and d.startswith("identity") for st, d in binding):
         return "identity", None
@@ -651,6 +673,104 @@ def cmd_intoto(args):
         }
     json.dump(stmt, sys.stdout, indent=2)
     print()
+
+
+class ReadOnlyRepo:
+    """Replay writes tree objects (SPEC §5c note). A verifier that must not
+    touch the repository it is given replays in a throwaway bare clone that
+    borrows the original's objects (git's alternates) and receives the new
+    ones itself. Nothing is written to the source; the clone is deleted."""
+
+    def __init__(self, repo, allow_write=False):
+        self.repo, self.allow_write, self.tmp = repo, allow_write, None
+
+    def __enter__(self):
+        if self.allow_write:
+            return self.repo
+        import tempfile
+        self.tmp = tempfile.mkdtemp(prefix="srcv-")
+        r = subprocess.run(["git", "clone", "--quiet", "--bare", "--shared", self.repo, self.tmp],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"could not make a read-only clone: {r.stderr.strip()}")
+        return self.tmp
+
+    def __exit__(self, *exc):
+        if self.tmp:
+            import shutil
+            shutil.rmtree(self.tmp, ignore_errors=True)
+
+
+EXIT_VERIFIED, EXIT_UNVERIFIED, EXIT_INCOMPLETE, EXIT_MALFORMED = 0, 1, 2, 3
+
+
+def cmd_verify_artifact(args):
+    """Everything a consumer needs, in one call: the record's claims recomputed
+    against the repository, the signature checked and bound to a workflow
+    identity, and the statement checked to be exactly what the record produces.
+
+    Exit codes: 0 verified · 1 unverified (a residual, no covering approval,
+    or a failed signature — the report names which) · 2 incomplete (a claim
+    could not be checked, typically signatures) · 3 malformed input."""
+    import os
+    d = args.dir
+    paths = {k: os.path.join(d, f) for k, f in
+             (("record", "record.json"), ("statement", "statement.json"),
+              ("bundle", "statement.sigstore.json"))}
+    if not os.path.isfile(paths["record"]):
+        print(f"malformed: {paths['record']} not found", file=sys.stderr)
+        return EXIT_MALFORMED
+    try:
+        record = json.load(open(paths["record"]))
+        for k in ("change", "record_digest"):
+            if k not in record:
+                raise ValueError(f"record lacks '{k}'")
+        bare(record["change"]["tree_hash"])
+    except (ValueError, KeyError, TypeError) as e:
+        print(f"malformed: record.json: {e}", file=sys.stderr)
+        return EXIT_MALFORMED
+    statement_path = paths["statement"] if os.path.isfile(paths["statement"]) else None
+    bundle_path = paths["bundle"] if os.path.isfile(paths["bundle"]) else None
+    if statement_path:
+        try:
+            json.load(open(statement_path))
+        except ValueError as e:
+            print(f"malformed: statement.json: {e}", file=sys.stderr)
+            return EXIT_MALFORMED
+
+    try:
+        with ReadOnlyRepo(args.repo, allow_write=args.allow_write) as repo:
+            res = verify(record, repo=repo, bundle_path=bundle_path,
+                         signer_repo=args.signer_repo, statement_path=statement_path)
+    except RuntimeError as e:
+        print(f"malformed: {e}", file=sys.stderr)
+        return EXIT_MALFORMED
+    if not bundle_path:
+        res.add("bundle", "INCOMPLETE", "no statement.sigstore.json in the artifact")
+
+    worst = res.worst
+    code = {"PASS": EXIT_VERIFIED, "WARN": EXIT_VERIFIED,
+            "INCOMPLETE": EXIT_INCOMPLETE, "FAIL": EXIT_UNVERIFIED}[worst]
+    if args.json:
+        json.dump({"schema": SCHEMA, "verdict": VERDICTS[worst], "worst": worst,
+                   "exit": code, "read_only": not args.allow_write,
+                   "steps": [{"step": st, "status": status, "detail": detail}
+                             for st, status, detail in res.steps],
+                   "residual": res.residual}, sys.stdout, indent=2)
+        print()
+        return code
+    width = max(len(s_[0]) for s_ in res.steps)
+    for step, status, detail in res.steps:
+        mark = {"PASS": "✓", "FAIL": "✗", "WARN": "!", "INCOMPLETE": "?"}[status]
+        print(f"  {mark} {step.ljust(width)}  {status:<10} {detail}")
+    if res.residual:
+        print("\n  residual — shipped without an approval covering it:")
+        for line in res.residual.splitlines():
+            if line.startswith(("+", "-")) and not line.startswith(("+++", "---")):
+                print(f"      {line}")
+    print(f"\n  VERDICT: {VERDICTS[worst]}   (exit {code}, "
+          f"{'in place' if args.allow_write else 'read-only replay'})")
+    return code
 
 
 VERDICTS = {
@@ -722,6 +842,15 @@ def main():
     v.add_argument("--json", action="store_true",
                    help="emit the result as JSON instead of the human report (same exit code)")
     v.set_defaults(func=cmd_verify)
+
+    va = sub.add_parser("verify-artifact",
+                        help="verify a downloaded attestation artifact in one call (read-only)")
+    va.add_argument("dir", help="directory holding record.json, statement.json, statement.sigstore.json")
+    va.add_argument("--signer-repo", help="owner/name whose workflow must have signed (R4)")
+    va.add_argument("--allow-write", action="store_true",
+                    help="replay in the given repository instead of a throwaway clone")
+    va.add_argument("--json", action="store_true")
+    va.set_defaults(func=cmd_verify_artifact)
 
     i = sub.add_parser("intoto", help="re-express a record as an in-toto Statement")
     i.add_argument("record")

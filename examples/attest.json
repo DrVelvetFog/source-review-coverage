@@ -24,6 +24,9 @@
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
     "ran_at": "2026-09-11T11:40:32Z",
+    "ran_at": "2026-09-11T11:20:03Z",
+    "ran_at": "2026-09-09T12:07:29Z",
+    "ran_at": "2026-09-08T14:02:51Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -54,6 +57,9 @@
      "tail": "passed 16, failed 0\n"
     },
     "ran_at": "2026-09-11T11:40:37Z",
+    "ran_at": "2026-09-11T11:20:09Z",
+    "ran_at": "2026-09-09T12:07:35Z",
+    "ran_at": "2026-09-08T14:02:58Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -65,23 +71,23 @@
    "_type": "https://in-toto.io/Statement/v1",
    "subject": [
     {
-     "name": "tests/comment/test_render_comment.sh",
+     "name": "tests/verify/test_verify_artifact.sh",
      "digest": {
-      "sha256": "6960bea2fffc3deb0ad775fb7852ab6b1385ea282c6b337fd5e2f034c63564f7"
+      "sha256": "442c1865ce41db946f5c2c60304b99884d0d2108a0a16bbf05ce332ca45d9977"
      }
     }
    ],
    "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
    "predicate": {
-    "id": "comment-tests",
+    "id": "verify-artifact-tests",
     "package": "source-review-coverage",
     "version": "0.2.1",
-    "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1",
+    "command": "bash tests/verify/test_verify_artifact.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
-     "sha256": "4d377213bc071a7a8f20cb6a51279e0d295512799ba6a311bf498a5fcf77f7ed",
-     "bytes": 20,
-     "tail": "passed 14, failed 0\n"
+     "sha256": "ca592fb1fbdd364e322eaea2c863458080ff51e8f9fedc770c2ac8b85aa8e2b1",
+     "bytes": 35,
+     "tail": "passed 15, failed 0 (sigstore: no)\n"
     },
     "ran_at": "2026-09-11T11:40:40Z",
     "runner": {
@@ -174,6 +180,9 @@
      "tail": "ding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.2.1\n  \u2713 changelog                    PASS  newest entry [0.2.1], unreleased entries pending\nrelease check: PASS\n"
     },
     "ran_at": "2026-09-11T11:40:43Z",
+    "ran_at": "2026-09-11T11:20:12Z",
+    "ran_at": "2026-09-09T12:07:37Z",
+    "ran_at": "2026-09-08T14:03:00Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
