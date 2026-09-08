@@ -21,6 +21,8 @@ set -euo pipefail
 : "${GITHUB_STEP_SUMMARY:=/dev/null}"
 : "${GITHUB_EVENT_NAME:=push}"
 : "${SRC_APPROVALS:=auto}"           # auto | off  (auto = read the PR's reviews with the workflow token)
+: "${SRC_COMMENT:=residual}"         # residual | always | never  (one PR comment, edited on re-runs)
+: "${SRC_ARTIFACT_NAME:=source-review-coverage-attestation}"
 
 case "$SRC_FAIL_ON" in
   never|signature|residual) ;;
@@ -30,6 +32,7 @@ esac
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CEB="$here/../tools/ceb.py"
 FORGE="$here/forge_github.py"
+RENDER="$here/../tools/render_comment.py"
 mkdir -p "$SRC_OUT"
 
 out() { printf '%s=%s\n' "$1" "$2" >> "$GITHUB_OUTPUT"; }
@@ -188,6 +191,27 @@ out residual "$([ "$RESIDUAL" = 1 ] && echo "$SRC_OUT/residual.diff" || true)"
 out pr "${pr:-}"
 out approvals "$n_approvals"
 cat "$SRC_OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+# ---- 5b. one pull-request comment: the residual, as a diff ------------------
+# Rendered only when bytes shipped that no approval covers (or always, on
+# request); posted with the workflow token; the earlier comment is edited on
+# re-runs so a pull request carries one, current, comment.
+case "$SRC_COMMENT" in never|residual|always) ;; *) die "comment must be never, residual or always (got '$SRC_COMMENT')" ;; esac
+if [ "$SRC_COMMENT" != never ] && [ -n "${pr:-}" ]; then
+  render_args=(--artifact "$SRC_ARTIFACT_NAME")
+  [ -n "${GITHUB_SERVER_URL:-}" ] && [ -n "${GITHUB_RUN_ID:-}" ] && render_args+=(--run-url "$GITHUB_SERVER_URL/$SRC_SIGNER_REPO/actions/runs/$GITHUB_RUN_ID")
+  [ "$SRC_COMMENT" = always ] && render_args+=(--always)
+  python3 "$RENDER" "$SRC_OUT/verify.json" "$SRC_OUT/record.json" "${render_args[@]}" > "$SRC_OUT/comment.md"
+  if [ -s "$SRC_OUT/comment.md" ]; then
+    if [ -z "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]; then
+      warn "comment rendered but not posted: no GITHUB_TOKEN"
+    elif posted=$(python3 "$FORGE" comment "$SRC_SIGNER_REPO" "$pr" --marker "<!-- source-review-coverage -->" --body-file "$SRC_OUT/comment.md" 2>&1); then
+      note "pull request comment $posted"; out comment "${posted#* }"
+    else
+      warn "comment not posted (${posted##*-> }); the job needs 'permissions: pull-requests: write' to comment"
+    fi
+  fi
+fi
 
 echo; python3 - "$SRC_OUT/verify.json" <<'PY'
 import json, sys

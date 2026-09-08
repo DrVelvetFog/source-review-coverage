@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
   id-token: write      # ambient OIDC — the whole point
-  pull-requests: read  # CE-002 will read approvals from here
+  pull-requests: write # read reviews; post the one status comment
 
 jobs:
   attest:
@@ -33,3 +33,5 @@ jobs:
           # VERIFIED. The gate is the signature; residuals are reported, not
           # blocked, on this repository.
           fail-on: signature
+          # This repository shows its own verdict on every pull request.
+          comment: always

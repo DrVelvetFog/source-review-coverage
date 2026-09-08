@@ -11,6 +11,11 @@
       "id": "approval-tests",
       "path": "tests/action/test_approvals.sh",
       "command": "bash tests/action/test_approvals.sh 2>/dev/null | tail -1"
+    },
+    {
+      "id": "comment-tests",
+      "path": "tests/comment/test_render_comment.sh",
+      "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1"
     }
   ]
 }

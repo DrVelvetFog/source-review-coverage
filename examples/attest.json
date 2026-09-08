@@ -23,7 +23,7 @@
      "bytes": 226,
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
-    "ran_at": "2026-09-08T13:36:45Z",
+    "ran_at": "2026-09-08T14:17:39Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -53,7 +53,37 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-08T13:36:51Z",
+    "ran_at": "2026-09-08T14:17:45Z",
+    "runner": {
+     "os": "darwin",
+     "python": "3.14.6",
+     "ci": false
+    }
+   }
+  },
+  {
+   "_type": "https://in-toto.io/Statement/v1",
+   "subject": [
+    {
+     "name": "tests/comment/test_render_comment.sh",
+     "digest": {
+      "sha256": "6960bea2fffc3deb0ad775fb7852ab6b1385ea282c6b337fd5e2f034c63564f7"
+     }
+    }
+   ],
+   "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
+   "predicate": {
+    "id": "comment-tests",
+    "package": "source-review-coverage",
+    "version": "0.2.1",
+    "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1",
+    "exit": 0,
+    "stdout": {
+     "sha256": "4d377213bc071a7a8f20cb6a51279e0d295512799ba6a311bf498a5fcf77f7ed",
+     "bytes": 20,
+     "tail": "passed 14, failed 0\n"
+    },
+    "ran_at": "2026-09-08T14:17:48Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",

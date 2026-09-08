@@ -6,6 +6,9 @@ Read review state from GitHub, and nothing else.
                                                     whose merge commit is SHA, or ""
   forge_github.py approvals OWNER/REPO NUMBER    -> JSON: the PR's coordinates and
                                                     its effective approvals
+  forge_github.py comment OWNER/REPO NUMBER --marker M --body-file F
+                                                 -> posts F as a comment on the PR, or edits
+                                                    the earlier comment carrying marker M
 
 An "effective approval" is a user's most recent review on the PR when that
 review's state is APPROVED. A later CHANGES_REQUESTED or a dismissal by the
@@ -34,11 +37,12 @@ def token():
     return t
 
 
-def get(path, params=None):
+def get(path, params=None, method="GET", body=None):
     url = f"{API}{path}"
     if params:
         url += "?" + "&".join(f"{k}={v}" for k, v in params.items())
-    req = urllib.request.Request(url, headers={
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method, headers={
         "Authorization": f"Bearer {token()}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -48,7 +52,7 @@ def get(path, params=None):
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
-        sys.exit(f"forge_github: GET {path} -> {e.code} {e.reason}")
+        sys.exit(f"forge_github: {method} {path} -> {e.code} {e.reason}")
 
 
 def paginate(path):
@@ -107,8 +111,22 @@ def approvals(repo, number):
     }
 
 
+def comment(repo, number, marker, body):
+    """One comment per pull request: find the earlier one by its marker and edit
+    it, else create. The marker is an HTML comment, invisible when rendered."""
+    for c in paginate(f"/repos/{repo}/issues/{number}/comments"):
+        if marker in (c.get("body") or ""):
+            get(f"/repos/{repo}/issues/comments/{c['id']}", method="PATCH", body={"body": body})
+            return "updated", c["html_url"]
+    c = get(f"/repos/{repo}/issues/{number}/comments", method="POST", body={"body": body})
+    return "created", c["html_url"]
+
+
 def main(argv):
-    if len(argv) == 4 and argv[1] == "pr-for-commit":
+    if len(argv) >= 7 and argv[1] == "comment" and argv[4] == "--marker" and argv[6] == "--body-file":
+        action, url = comment(argv[2], int(argv[3]), argv[5], open(argv[7], encoding="utf-8").read())
+        print(f"{action} {url}")
+    elif len(argv) == 4 and argv[1] == "pr-for-commit":
         n = pr_for_commit(argv[2], argv[3])
         print(n if n is not None else "")
     elif len(argv) == 4 and argv[1] == "approvals":

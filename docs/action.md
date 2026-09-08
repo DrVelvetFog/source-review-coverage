@@ -17,7 +17,7 @@ on:
 permissions:
   contents: read
   id-token: write        # lets the workflow identity sign (rule R4)
-  pull-requests: read    # lets the action read reviews
+  pull-requests: write   # read reviews; post the one comment (read is enough with comment: never)
 jobs:
   attest:
     runs-on: ubuntu-latest
@@ -65,6 +65,15 @@ beyond what a reviewer saw.
 - Pull requests from forks have no signing identity; the action records without signing
   and says so.
 
+## The comment
+
+When bytes shipped that no approval covers, the action posts one comment on the pull
+request: the verdict, each approval and the revision it was given on, and the residual as
+a diff — the exact lines to review, since no review covered them by construction. On
+re-runs the same comment is edited, found by a hidden marker, so a pull request never
+accumulates a thread of status posts. Clean replays and identities stay silent unless
+`comment: always`. Every comment ends with the specification's §6 line.
+
 ## Inputs
 
 | input | default | meaning |
@@ -78,11 +87,13 @@ beyond what a reviewer saw.
 | `sigstore-version` | `4.5.0` | Pinned `sigstore` release used to sign and to check the signature. The only package installed. |
 | `artifact-name` | `source-review-coverage-attestation` | Artifact name. |
 | `approvals` | `auto` | `auto` reads the pull request's reviews with the workflow token; `off` records none. |
+| `comment` | `residual` | One comment on the pull request, edited on re-runs rather than repeated. `residual` posts only when bytes shipped that no approval covers, with the diff; `always` posts the verdict on every run; `never`. Needs `pull-requests: write`; without it the comment is rendered into the artifact and a warning says why it was not posted. |
 
 ## Outputs
 
 `verdict`, `signatures`, `residual` (path or empty), `record`, `statement`, `bundle`, `pr`
-(the pull request the approvals came from), `approvals` (how many effective approvals).
+(the pull request the approvals came from), `approvals` (how many effective approvals),
+`comment` (URL of the pull request comment, when one was posted).
 
 ## Verifying it somewhere else
 
