@@ -7,6 +7,12 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-08
+
+### Changed
+
+- `action.yml` description shortened to the 125 characters the GitHub Marketplace allows. No functional change.
+
 ## [0.2.0] - 2026-09-08
 
 The first release of the GitHub Action.
@@ -54,6 +60,7 @@ The first release of the GitHub Action.
   from the object graph, residual diff on mismatch.
 - Keyless Sigstore signing by workflow identity in `.github/workflows/attest.yml`.
 
-[Unreleased]: https://github.com/DrVelvetFog/source-review-coverage/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/DrVelvetFog/source-review-coverage/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/DrVelvetFog/source-review-coverage/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/DrVelvetFog/source-review-coverage/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/DrVelvetFog/source-review-coverage/releases/tag/v0.1.0
