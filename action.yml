@@ -32,6 +32,9 @@ inputs:
   artifact-name:
     description: "Name of the uploaded artifact"
     default: source-review-coverage-attestation
+  approvals:
+    description: "auto reads the pull request's reviews with the workflow token; off records none"
+    default: auto
 
 outputs:
   verdict:
@@ -52,6 +55,12 @@ outputs:
   bundle:
     description: "Path to the Sigstore bundle, when signed"
     value: ${{ steps.attest.outputs.bundle }}
+  pr:
+    description: "The pull request the approvals were read from, if any"
+    value: ${{ steps.attest.outputs.pr }}
+  approvals:
+    description: "How many effective approvals the record carries"
+    value: ${{ steps.attest.outputs.approvals }}
 
 runs:
   using: composite
@@ -72,6 +81,8 @@ runs:
         SRC_DECLARED_BY: ${{ inputs.declared-by }}
         SRC_SIGSTORE_VERSION: ${{ inputs.sigstore-version }}
         SRC_SIGNER_REPO: ${{ github.repository }}
+        SRC_APPROVALS: ${{ inputs.approvals }}
+        GITHUB_TOKEN: ${{ github.token }}   # the workflow's own token; never a personal one
       run: bash "${{ github.action_path }}/action/attest.sh"
 
     - name: Upload the attestation
