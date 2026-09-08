@@ -141,6 +141,60 @@ def digest(obj):
 # record
 
 
+def object_exists(oid, repo="."):
+    _, rc = git("cat-file", "-e", f"{oid}^{{commit}}", repo=repo, check=False)
+    return rc == 0
+
+
+def approvals_for_record(args, *, fmt, reviewed, repo="."):
+    """Approvals as the record carries them (rule R3: each bound to the tree it
+    was given on).
+
+    --approvals FILE takes what the forge reported: a list of
+    {approver, commit, tree?, review_id?, submitted_at?}. The tree is resolved
+    from the commit when that object is present locally (source "git"); when a
+    reviewed revision was force-pushed away and only the forge still knows its
+    tree, the forge's value is used and labelled (source "forge-api") so a
+    verifier can tell which claims it could recompute.
+
+    --approver NAME is the bare form: one approval over the reviewed head."""
+    out = []
+    if getattr(args, "approvals", None):
+        for a in json.load(open(args.approvals)):
+            commit = a.get("commit")
+            if commit and object_exists(commit, repo=repo):
+                tree, source = tree_of(commit, repo=repo), "git"
+            elif a.get("tree"):
+                tree, source = a["tree"], a.get("source", "forge-api")
+            else:
+                raise SystemExit(f"approval by {a.get('approver')} names neither a "
+                                 "reachable commit nor a tree; refusing to guess")
+            if a.get("tree") and source == "git" and a["tree"] != tree:
+                raise SystemExit(f"approval by {a.get('approver')}: forge tree "
+                                 f"{a['tree'][:12]} != git tree {tree[:12]} for {commit[:12]}")
+            out.append({
+                "over_tree_hash": f"git-{fmt}:{tree}",
+                "approver": a.get("approver"),
+                "commit": commit,
+                "review_id": a.get("review_id"),
+                "submitted_at": a.get("submitted_at"),
+                "source": source,
+                "signature": None,  # v0: unsigned, see verify_signatures
+            })
+    if getattr(args, "approver", None):
+        out.append({
+            "over_tree_hash": f"git-{fmt}:{reviewed}",
+            "approver": args.approver,
+            "commit": git("rev-parse", args.reviewed_head, repo=repo)[0],
+            "review_id": None,
+            "submitted_at": None,
+            "source": "argument",
+            "signature": None,
+        })
+    out.sort(key=lambda a: (a.get("submitted_at") or "", a.get("review_id") or 0))
+    return out
+
+
 def cmd_record(args):
     repo = args.repo
     fmt = object_format(repo)
@@ -181,17 +235,7 @@ def cmd_record(args):
             {"name": c, "over_tree_hash": f"git-{fmt}:{reviewed}", "outcome": "pass"}
             for c in (args.check or [])
         ],
-        "approvals": (
-            [
-                {
-                    "over_tree_hash": f"git-{fmt}:{reviewed}",
-                    "approver": args.approver,
-                    "signature": None,  # v0: unsigned, see verify_signatures
-                }
-            ]
-            if args.approver
-            else []
-        ),
+        "approvals": approvals_for_record(args, fmt=fmt, reviewed=reviewed, repo=repo),
         "merge_transform": {
             "kind": transform_kind,
             # Only meaningful for a merge commit; a squash has one parent
@@ -407,23 +451,64 @@ def verify(record, repo=".", bundle_path=None, signer_repo=None,
             res.add("merge transform", "FAIL",
                     f"residual — bytes shipped that are not the automatic merge of the reviewed head ({why})")
 
-    # 2b. approval binding: does an approval cover the shipped tree, either
-    # directly (identity) or through the replay above?
-    covered = False
-    if not approvals:
-        res.add("approval binding", "FAIL", "no approvals in record")
+    # 2b. approval binding: does an approval cover the shipped tree? Directly
+    # (identity), or because the shipped tree is exactly the automatic merge of
+    # the revision that was approved onto the base it landed on (replay of the
+    # approved revision, not of whatever was pushed afterwards). When it is
+    # neither, the residual is the diff between that automatic merge and what
+    # shipped: the bytes that landed beyond what the approver saw.
+    landing_base = graph_parents[0] if len(graph_parents) >= 2 else mt.get("base_at_merge")
+    reviewed_tree = None
+    if mt.get("reviewed_head"):
+        try:
+            reviewed_tree = tree_of(mt["reviewed_head"], repo=repo)
+        except RuntimeError:
+            reviewed_tree = None
+    # One approval that covers the shipped tree is coverage; an earlier approval
+    # of a superseded revision is stale, not a failure. The failure is when no
+    # approval covers, and then the residual is measured from the most recent
+    # approval: the bytes that landed beyond what the last reviewer saw.
+    covered, stale = False, []
     for a in approvals:
-        over = bare(a.get("over_tree_hash"))
+        over, who = bare(a.get("over_tree_hash")), a.get("approver") or "?"
+        commit = a.get("commit")
         if over == shipped:
-            res.add("approval binding", "PASS", "identity — approved tree is the shipped tree")
+            res.add("approval binding", "PASS", f"identity — {who} approved the shipped tree")
             covered = True
-        elif expected is None:
-            res.add("approval binding", "FAIL", "tree mismatch and no merge_transform to replay")
-        elif expected == shipped:
-            res.add("approval binding", "PASS", f"replay ({source}) — shipped is the automatic merge, exactly")
+        elif commit and landing_base and object_exists(commit, repo=repo):
+            _, expected_a = merge_tree(landing_base, commit, repo=repo)
+            if expected_a == shipped:
+                res.add("approval binding", "PASS",
+                        f"replay — shipped is the automatic merge of the revision {who} approved ({commit[:12]})")
+                covered = True
+            else:
+                stale.append(("residual", who, commit, expected_a))
+        elif reviewed_tree and over == reviewed_tree and expected == shipped:
+            res.add("approval binding", "PASS",
+                    f"replay ({source}) — shipped is the automatic merge of the reviewed head {who} approved")
             covered = True
         else:
-            res.add("approval binding", "FAIL", "residual — bytes shipped that no approval covers")
+            stale.append(("unreachable", who, commit or over, None))
+
+    if not approvals:
+        res.add("approval binding", "FAIL", "no approvals in record")
+    elif covered:
+        for kind, who, ref, _ in stale:
+            res.add("approval", "WARN",
+                    f"stale — {who}'s approval ({ref[:12]}) does not cover the shipped tree; a later approval does")
+    else:
+        kind, who, ref, expected_a = stale[-1]   # approvals are in submission order
+        if kind == "residual":
+            res.add("approval binding", "FAIL",
+                    f"residual — bytes shipped beyond what {who} approved ({ref[:12]})")
+            res.residual = diff_trees(expected_a, shipped, repo=repo) if expected_a else res.residual
+        else:
+            res.add("approval binding", "FAIL",
+                    f"unreachable — the revision {who} approved ({ref[:12]}) is not in this repository; cannot replay")
+            if not res.residual:
+                res.residual = diff_trees(ref, shipped, repo=repo) or None
+        for kind, who, ref, _ in stale[:-1]:
+            res.add("approval", "WARN", f"stale — {who}'s approval ({ref[:12]}) does not cover the shipped tree")
 
     # 3. check coverage
     #
@@ -500,7 +585,12 @@ def to_intoto(record, subject_name="refs/heads/main"):
         "predicateType": "https://drvelvetfog.github.io/source-review-coverage/v0.1",
         "predicate": {
             "approvals": [
-                {"overTree": tree(a.get("over_tree_hash")), "approver": a.get("approver")}
+                {k: v for k, v in {
+                    "overTree": tree(a.get("over_tree_hash")),
+                    "approver": a.get("approver"),
+                    # Asserted by the forge; bounds nothing without an inclusion proof.
+                    "approvedAt": a.get("submitted_at"),
+                }.items() if v is not None}
                 for a in record.get("approvals", [])
             ],
             "checks": [
@@ -535,16 +625,14 @@ def coverage_result(record, repo="."):
     would reproduce exactly the vendor-log problem this predicate exists to
     replace."""
     res = verify(record, repo=repo)
-    for step, status, detail in res.steps:
-        if step != "approval binding":
-            continue
-        if status == "PASS" and "identity" in detail:
-            return "identity", None
-        if status == "PASS" and "replay" in detail:
-            return "replay", None
-        if status == "FAIL" and "residual" in detail:
-            mt = record.get("merge_transform") or {}
-            return "residual", bare(mt.get("expected_tree"))
+    binding = [(st, d) for step, st, d in res.steps if step == "approval binding"]
+    if any(st == "PASS" and d.startswith("identity") for st, d in binding):
+        return "identity", None
+    if any(st == "PASS" and d.startswith("replay") for st, d in binding):
+        return "replay", None
+    if any(st == "FAIL" and d.startswith("residual") for st, d in binding):
+        mt = record.get("merge_transform") or {}
+        return "residual", bare(mt.get("expected_tree"))
     return "unverifiable", None
 
 
@@ -615,7 +703,8 @@ def main():
     r.add_argument("--base", required=True)
     r.add_argument("--reviewed-head", required=True)
     r.add_argument("--merged", required=True)
-    r.add_argument("--approver")
+    r.add_argument("--approver", help="one approval over the reviewed head (bare form)")
+    r.add_argument("--approvals", help="JSON file of forge-reported approvals, each bound to its own revision")
     r.add_argument("--check", action="append")
     r.add_argument("--agent", action="append")
     r.add_argument("--declared-by")

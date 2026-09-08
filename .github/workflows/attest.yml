@@ -7,6 +7,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  pull_request_review:
+    types: [submitted]   # re-run when a review lands, so approval state is attested
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,8 @@ jobs:
       - uses: ./
         with:
           checkout: "false"
-          # Commits reach main by direct push, so there is no approval to bind
-          # and the coverage verdict is correctly UNVERIFIED until CE-002 lands.
-          # The gate here is the signature, which is what this run can prove.
+          # Approvals are read from the pull request's reviews. A direct push to
+          # main carries none and is correctly UNVERIFIED; a reviewed merge is
+          # VERIFIED. The gate is the signature; residuals are reported, not
+          # blocked, on this repository.
           fail-on: signature

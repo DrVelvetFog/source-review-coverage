@@ -12,10 +12,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  pull_request_review:
+    types: [submitted]
 permissions:
   contents: read
   id-token: write        # lets the workflow identity sign (rule R4)
-  pull-requests: read
+  pull-requests: read    # lets the action read reviews
 jobs:
   attest:
     runs-on: ubuntu-latest
@@ -38,9 +40,30 @@ An artifact named `source-review-coverage-attestation` containing:
 | `verify.json` | the verifier's own result over what it produced |
 | `residual.diff` | only when bytes shipped that no approval covers: exactly those bytes |
 
-and a job summary with the same table. Until approvals are sourced from the forge's
-review data (CE-002), a push to `main` carries no approval and the coverage verdict is
-`UNVERIFIED`; the signature is what this version can prove, and it does.
+and a job summary with the same table.
+
+## Where approvals come from
+
+The action reads the pull request's reviews with the workflow's own token
+(`pull-requests: read`); it never accepts a personal token. A user's most recent review
+counts when its state is `APPROVED`; a later change request or a dismissal by the same
+user supersedes an earlier approval, as the forge itself treats it. Each approval is
+bound to the tree of the revision it was given on (rule R3), and the reviewed head
+becomes the most recently approved revision, so the replay measures exactly what landed
+beyond what a reviewer saw.
+
+- On `pull_request` and `pull_request_review` events, the approvals are the PR's own.
+  Add `pull_request_review: types: [submitted]` to the workflow so the check re-runs when
+  a review lands.
+- On a push to `main`, the action asks the forge which merged pull request produced the
+  commit, fetches `refs/pull/N/head` so approved revisions can be replayed, and binds
+  that PR's approvals. A direct push has no pull request and therefore no approvals:
+  the verdict is `UNVERIFIED`, which is the truth about it.
+- A pull request approved and then pushed to before merging yields `UNVERIFIED` with a
+  residual naming the post-approval bytes. An approved revision that was force-pushed
+  away and can no longer be fetched is reported as unreachable and fails closed.
+- Pull requests from forks have no signing identity; the action records without signing
+  and says so.
 
 ## Inputs
 
@@ -54,10 +77,12 @@ review data (CE-002), a push to `main` carries no approval and the coverage verd
 | `declared-by` | `github-actions` | Recorded as the party asserting authorship. Issuer-asserted; the verifier never treats it as verified. |
 | `sigstore-version` | `4.5.0` | Pinned `sigstore` release used to sign and to check the signature. The only package installed. |
 | `artifact-name` | `source-review-coverage-attestation` | Artifact name. |
+| `approvals` | `auto` | `auto` reads the pull request's reviews with the workflow token; `off` records none. |
 
 ## Outputs
 
-`verdict`, `signatures`, `residual` (path or empty), `record`, `statement`, `bundle`.
+`verdict`, `signatures`, `residual` (path or empty), `record`, `statement`, `bundle`, `pr`
+(the pull request the approvals came from), `approvals` (how many effective approvals).
 
 ## Verifying it somewhere else
 

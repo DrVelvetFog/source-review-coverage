@@ -20,6 +20,7 @@ set -euo pipefail
 : "${GITHUB_OUTPUT:=/dev/null}"
 : "${GITHUB_STEP_SUMMARY:=/dev/null}"
 : "${GITHUB_EVENT_NAME:=push}"
+: "${SRC_APPROVALS:=auto}"           # auto | off  (auto = read the PR's reviews with the workflow token)
 
 case "$SRC_FAIL_ON" in
   never|signature|residual) ;;
@@ -28,6 +29,7 @@ esac
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CEB="$here/../tools/ceb.py"
+FORGE="$here/forge_github.py"
 mkdir -p "$SRC_OUT"
 
 out() { printf '%s=%s\n' "$1" "$2" >> "$GITHUB_OUTPUT"; }
@@ -41,37 +43,89 @@ out dir "$SRC_OUT"   # first, so a failed run still uploads whatever it produced
 mode="$SRC_MODE"
 if [ "$mode" = auto ]; then
   case "$GITHUB_EVENT_NAME" in
-    pull_request|pull_request_target) mode=pull_request ;;
+    pull_request|pull_request_target|pull_request_review) mode=pull_request ;;
     *) mode=push ;;
   esac
 fi
 
+pr=""; approvals_file=""; n_approvals=0
+record_args=()
+
+# Approvals come from the forge's review data, read with the workflow's own
+# token. Each is bound to the revision it was given on; the reviewed head
+# becomes the most recently approved revision, so the replay measures exactly
+# what landed beyond what a reviewer saw.
+fetch_approvals() {   # $1 = PR number; sets n_approvals (never via stdout: warnings go there too)
+  n_approvals=0
+  [ "$SRC_APPROVALS" = auto ] || return 0
+  if [ -z "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]; then
+    warn "no GITHUB_TOKEN; approvals not read (record will carry none)"; return 0
+  fi
+  python3 "$FORGE" approvals "$SRC_SIGNER_REPO" "$1" > "$SRC_OUT/forge.json"
+  git -C "$SRC_REPO" fetch -q origin "refs/pull/$1/head:refs/remotes/pull/$1/head" 2>/dev/null \
+    || warn "could not fetch refs/pull/$1/head; approved revisions may be unreachable"
+  n_approvals=$(python3 -c 'import json,sys; f=json.load(open(sys.argv[1])); json.dump(f["approvals"], open(sys.argv[2],"w"), indent=2); print(len(f["approvals"]))' \
+    "$SRC_OUT/forge.json" "$SRC_OUT/approvals.json")
+}
+latest_approved_commit() {
+  python3 -c 'import json,sys; a=json.load(open(sys.argv[1])); print(a[-1]["commit"] if a else "")' "$SRC_OUT/approvals.json"
+}
+have_commit() { git -C "$SRC_REPO" cat-file -e "$1^{commit}" 2>/dev/null; }
+
 if [ -n "${SRC_BASE:-}" ] && [ -n "${SRC_HEAD:-}" ]; then
   base="$SRC_BASE"; head="$SRC_HEAD"; merged="${SRC_MERGED:-HEAD}"
+  if [ -n "${SRC_APPROVALS_FILE:-}" ]; then
+    approvals_file="$SRC_APPROVALS_FILE"
+    n_approvals=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' "$approvals_file")
+  fi
 elif [ "$mode" = pull_request ]; then
   [ -n "${GITHUB_EVENT_PATH:-}" ] || die "pull_request mode needs GITHUB_EVENT_PATH"
-  read -r base head < <(python3 - "$GITHUB_EVENT_PATH" <<'PY'
+  read -r pr base head head_repo < <(python3 -c '
 import json, sys
 e = json.load(open(sys.argv[1]))["pull_request"]
-print(e["base"]["sha"], e["head"]["sha"])
-PY
-)
+print(e["number"], e["base"]["sha"], e["head"]["sha"], (e["head"].get("repo") or {}).get("full_name") or "-")' "$GITHUB_EVENT_PATH")
   merged=HEAD   # actions/checkout gives the merge ref; its parents are base and head
+  if [ "$SRC_SIGN" = true ] && [ "$head_repo" != "-" ] && [ "$head_repo" != "$SRC_SIGNER_REPO" ]; then
+    warn "pull request from a fork ($head_repo): no id-token is available, so this run cannot sign"
+    SRC_SIGN=false
+  fi
+  fetch_approvals "$pr"
+  if [ "$n_approvals" != 0 ]; then
+    approvals_file="$SRC_OUT/approvals.json"
+    latest=$(latest_approved_commit)
+    if [ -n "$latest" ] && have_commit "$latest"; then head="$latest"; fi
+  fi
 else
   merged=HEAD; head=HEAD
   if git -C "$SRC_REPO" rev-parse --verify -q HEAD^ >/dev/null; then
     base=HEAD^
   else
     note "root commit: nothing to compare against, no record issued"
-    out verdict SKIPPED; out dir "$SRC_OUT"; exit 0
+    out verdict SKIPPED; exit 0
+  fi
+  if [ "$SRC_APPROVALS" = auto ] && [ -n "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]; then
+    pr=$(python3 "$FORGE" pr-for-commit "$SRC_SIGNER_REPO" "$(git -C "$SRC_REPO" rev-parse HEAD)" || true)
+    if [ -n "$pr" ]; then
+      fetch_approvals "$pr"
+      pr_head=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["pr"]["head_sha"])' "$SRC_OUT/forge.json")
+      if have_commit "$pr_head"; then head="$pr_head"; fi
+      if [ "$n_approvals" != 0 ]; then
+        approvals_file="$SRC_OUT/approvals.json"
+        latest=$(latest_approved_commit)
+        if [ -n "$latest" ] && have_commit "$latest"; then head="$latest"; fi
+      fi
+    else
+      note "no merged pull request is associated with this commit (direct push); record carries no approvals"
+    fi
   fi
 fi
-echo "mode=$mode base=$base reviewed-head=$head merged=$merged"
+[ -n "$approvals_file" ] && record_args+=(--approvals "$approvals_file")
+echo "mode=$mode pr=${pr:-none} approvals=$n_approvals base=$base reviewed-head=$head merged=$merged"
 
 # ---- 2. record, statement -------------------------------------------------
 python3 "$CEB" --repo "$SRC_REPO" record \
   --base "$base" --reviewed-head "$head" --merged "$merged" \
-  --declared-by "$SRC_DECLARED_BY" > "$SRC_OUT/record.json"
+  --declared-by "$SRC_DECLARED_BY" ${record_args[@]+"${record_args[@]}"} > "$SRC_OUT/record.json"
 python3 "$CEB" --repo "$SRC_REPO" intoto "$SRC_OUT/record.json" > "$SRC_OUT/statement.json"
 
 # ---- 3. sign ----------------------------------------------------------------
@@ -131,7 +185,8 @@ out record "$SRC_OUT/record.json"
 out statement "$SRC_OUT/statement.json"
 out bundle "$([ -f "$SRC_OUT/statement.sigstore.json" ] && echo "$SRC_OUT/statement.sigstore.json" || true)"
 out residual "$([ "$RESIDUAL" = 1 ] && echo "$SRC_OUT/residual.diff" || true)"
-out dir "$SRC_OUT"
+out pr "${pr:-}"
+out approvals "$n_approvals"
 cat "$SRC_OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
 
 echo; python3 - "$SRC_OUT/verify.json" <<'PY'
