@@ -75,7 +75,7 @@ runs:
       run: bash "${{ github.action_path }}/action/attest.sh"
 
     - name: Upload the attestation
-      if: ${{ inputs.upload == 'true' && steps.attest.outputs.verdict != 'SKIPPED' && always() }}
+      if: ${{ !cancelled() && inputs.upload == 'true' && steps.attest.outputs.verdict != 'SKIPPED' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
@@ -85,4 +85,5 @@ runs:
           ${{ steps.attest.outputs.dir }}/statement.sigstore.json
           ${{ steps.attest.outputs.dir }}/residual.diff
           ${{ steps.attest.outputs.dir }}/verify.json
+          !${{ steps.attest.outputs.dir }}/venv
         if-no-files-found: ignore

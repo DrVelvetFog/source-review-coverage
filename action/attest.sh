@@ -35,6 +35,8 @@ note() { echo "::notice::$*"; }
 warn() { echo "::warning::$*"; }
 die()  { echo "::error::$*"; exit 1; }
 
+out dir "$SRC_OUT"   # first, so a failed run still uploads whatever it produced
+
 # ---- 1. which revision, which review state -------------------------------
 mode="$SRC_MODE"
 if [ "$mode" = auto ]; then
@@ -74,10 +76,17 @@ python3 "$CEB" --repo "$SRC_REPO" intoto "$SRC_OUT/record.json" > "$SRC_OUT/stat
 
 # ---- 3. sign ----------------------------------------------------------------
 verify_args=(--statement "$SRC_OUT/statement.json")
+PY_SIG=python3   # the interpreter that has sigstore, when signing
 if [ "$SRC_SIGN" = true ]; then
-  python3 -m pip install --quiet --disable-pip-version-check "sigstore==$SRC_SIGSTORE_VERSION"
-  if ! python3 -m sigstore sign --bundle "$SRC_OUT/statement.sigstore.json" "$SRC_OUT/statement.json"; then
-    die "signing failed. The job needs 'permissions: id-token: write' so the workflow identity can sign (rule R4)."
+  # An isolated interpreter: the runner's system python carries a dist-packages
+  # pyOpenSSL that breaks against the cryptography release pip installs, and
+  # sigstore is the only package this action ever installs.
+  venv="$SRC_OUT/venv"
+  python3 -m venv "$venv"
+  PY_SIG="$venv/bin/python"
+  "$PY_SIG" -m pip install --quiet --disable-pip-version-check "sigstore==$SRC_SIGSTORE_VERSION"
+  if ! "$PY_SIG" -m sigstore sign --bundle "$SRC_OUT/statement.sigstore.json" "$SRC_OUT/statement.json"; then
+    die "signing failed (sigstore output above). If it mentions an identity token or OIDC, the job needs 'permissions: id-token: write' so the workflow identity can sign (rule R4)."
   fi
   verify_args+=(--bundle "$SRC_OUT/statement.sigstore.json" --signer-repo "$SRC_SIGNER_REPO")
 else
@@ -86,7 +95,7 @@ fi
 
 # ---- 4. verify what we just produced --------------------------------------
 set +e
-python3 "$CEB" --repo "$SRC_REPO" verify "$SRC_OUT/record.json" "${verify_args[@]}" --json > "$SRC_OUT/verify.json"
+"$PY_SIG" "$CEB" --repo "$SRC_REPO" verify "$SRC_OUT/record.json" "${verify_args[@]}" --json > "$SRC_OUT/verify.json"
 set -e
 
 # ---- 5. outputs, summary, fail-on -----------------------------------------
