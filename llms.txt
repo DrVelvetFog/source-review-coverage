@@ -1,0 +1,14 @@
+# source-review-coverage
+
+> Evidence, recomputable by a stranger, that the code which shipped is the code a human approved — a signed in-toto attestation for every merge, in one line. https://github.com/DrVelvetFog/source-review-coverage
+
+- [README](README.md)
+- [The GitHub Action](docs/action.md)
+- [Specification v0.1](v0.1/index.md)
+- [CHANGELOG](CHANGELOG.md)
+
+## Verified examples
+
+- [manifest](examples/manifest.json): runnable examples for source-review-coverage
+- [attestations](examples/attest.json): in-toto Statements — which version each example last ran against, exit code, output digest
+- Check before use: `xv check --rerun` (https://github.com/DrVelvetFog/verified-examples)

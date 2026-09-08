@@ -19,7 +19,7 @@ covered, which tree shipped, and how one became the other.
 
 ## Status
 
-Draft. Not yet submitted to the in-toto attestation framework for vetting.
+Submitted to the in-toto attestation framework as [in-toto/attestation#581](https://github.com/in-toto/attestation/pull/581), under review. A GitHub Action that issues these attestations for every merge lives in the [repository](https://github.com/DrVelvetFog/source-review-coverage).
 
 ## What a passing result does not establish
 
