@@ -1,7 +1,5 @@
 name: Source Review Coverage
-description: >-
-  Evidence, recomputable by a stranger, that the code which shipped is the code a
-  human approved — a signed in-toto attestation for every merge, in one line.
+description: "Signed, recomputable evidence that the code which shipped is the code a human approved. One in-toto attestation per merge."
 author: Tony Jagodka
 branding:
   icon: check-square
