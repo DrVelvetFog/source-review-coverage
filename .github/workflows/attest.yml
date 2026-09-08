@@ -1,74 +1,32 @@
-# Issues a source-review-coverage attestation for each revision that lands on
-# main, and signs it with the workflow's own identity.
-#
-# The signer is deliberately not a developer. R4 of the specification: a record
-# signed only by the party whose work is being attested is an assertion, not
-# evidence. Keyless OIDC binds the signature to this workflow in this
-# repository, which is a thing a verifier can check and a person cannot forge
-# without controlling the repository itself.
+# Dogfood: this repository runs its own action on every push to main and on
+# every pull request. The signer is the workflow identity, never a developer
+# (rule R4 of the specification).
 name: attest
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write   # ambient OIDC — the whole point
+  id-token: write      # ambient OIDC — the whole point
+  pull-requests: read  # CE-002 will read approvals from here
 
 jobs:
   attest:
     runs-on: ubuntu-latest
     steps:
+      # A local action reference needs the repository present first.
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # replay needs history, not a shallow clone
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: ./
         with:
-          python-version: '3.12'
-
-      - run: pip install --quiet sigstore
-
-      - name: Build the record and the statement
-        run: |
-          set -euo pipefail
-          # A push to main: the parent is the base, HEAD is what shipped. For a
-          # merge commit the replay inputs come from the commit's own parents.
-          python tools/ceb.py record \
-            --base "HEAD^" --reviewed-head "HEAD" --merged "HEAD" \
-            --declared-by "github-actions" \
-            > record.json
-          python tools/ceb.py intoto record.json > statement.json
-          echo "--- statement ---"; cat statement.json
-
-      - name: Sign the statement
-        run: |
-          python -m sigstore sign --bundle statement.sigstore.json statement.json
-          echo "--- bundle written ---"; ls -l statement.sigstore.json
-
-      - name: Verify what we just signed
-        # This gate is about the signature, not about review coverage. Commits
-        # reach this branch by direct push, so there is no approval to bind and
-        # the coverage verdict is correctly UNVERIFIED — printing that rather
-        # than suppressing it is the point. A deployment that merges via pull
-        # request would pass --approver, sourced from the forge's review data.
-        run: |
-          set -uo pipefail
-          out=$(python tools/ceb.py verify record.json \
-            --statement statement.json \
-            --bundle statement.sigstore.json \
-            --signer-repo "${GITHUB_REPOSITORY}"; true)
-          echo "$out"
-          echo "$out" | grep -qE "signatures +PASS" || {
-            echo "::error::the signature did not verify"; exit 1; }
-          echo "::notice::signature verified and bound to ${GITHUB_REPOSITORY}"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: source-review-coverage-attestation
-          path: |
-            record.json
-            statement.json
-            statement.sigstore.json
+          checkout: "false"
+          # Commits reach main by direct push, so there is no approval to bind
+          # and the coverage verdict is correctly UNVERIFIED until CE-002 lands.
+          # The gate here is the signature, which is what this run can prove.
+          fail-on: signature
