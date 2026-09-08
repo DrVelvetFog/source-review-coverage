@@ -7,6 +7,7 @@ python ceb.py record --base <ref> --reviewed-head <ref> --merged <ref> > record.
 python ceb.py intoto record.json > statement.json
 python ceb.py verify record.json --statement statement.json \
     --bundle statement.sigstore.json --signer-repo owner/name
+python ceb.py verify record.json --json      # machine-readable, same exit code
 ```
 
 Python 3 and `git`, no third-party packages, no network. Signature verification

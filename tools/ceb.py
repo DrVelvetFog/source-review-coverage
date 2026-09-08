@@ -5,7 +5,7 @@ ceb — Change-Evidence Binding, reference implementation of SPEC.md §5 / §5a.
 Two subcommands:
 
   ceb.py record --base <ref> --reviewed-head <ref> --merged <ref> [--approver ...]
-  ceb.py verify <record.json>
+  ceb.py verify <record.json> [--json]
 
 The verifier assumes it trusts nobody: it is given a repository and a record,
 and it recomputes. No network, no vendor API, no third-party packages. If a
@@ -363,12 +363,52 @@ def verify(record, repo=".", bundle_path=None, signer_repo=None,
     else:
         res.add("change integrity", "WARN", "no locator to resolve against")
 
-    # 2/5a. approval binding, with replay when the base moved
+    # 2. merge transform — is the shipped tree the automatic merge of the
+    # reviewed head onto the base? This is a fact about the change, computed
+    # whether or not anyone approved anything: bytes that are not the automatic
+    # merge were produced at merge time and no review covered them by
+    # construction. For a true merge commit the replay inputs come from the
+    # object graph, not from the record: parents cannot be misreported without
+    # changing the commit that is being verified. The record is only trusted
+    # for a squash, where the reviewed head is no longer reachable from the merge.
     mt = record.get("merge_transform") or {}
     approvals = record.get("approvals", [])
-    # Whether the reviewed state was shown to cover the shipped state. Check
-    # coverage depends on this: if unreviewed bytes shipped, a check that ran
-    # over the reviewed tree did not test what shipped either.
+    identity_approved = any(bare(a.get("over_tree_hash")) == shipped for a in approvals)
+
+    graph_parents = parents_of(merged_ref, repo=repo) if merged_ref else []
+    clean, expected, source = None, None, None
+    if len(graph_parents) >= 2:
+        clean, expected = replay_merge(graph_parents, repo=repo)
+        source = f"{len(graph_parents)} parents, from the commit graph"
+    elif mt.get("base_at_merge") and mt.get("reviewed_head"):
+        clean, expected = merge_tree(mt["base_at_merge"], mt["reviewed_head"], repo=repo)
+        source = "recorded squash inputs"
+    recorded = bare(mt.get("expected_tree"))
+    if recorded and expected and recorded != expected:
+        res.add("replay drift", "WARN",
+                f"recomputed {expected[:12]} != recorded {recorded[:12]} "
+                f"(strategy/git_version differ?)")
+    if expected is None:
+        res.add("merge transform", "WARN",
+                "no replay inputs; cannot tell whether the shipped tree is the automatic merge")
+    elif expected == shipped:
+        res.add("merge transform", "PASS",
+                f"replay ({source}) — shipped is the automatic merge, exactly")
+    else:
+        why = ("evil merge: edits made inside the merge commit" if len(graph_parents) >= 2
+               else "merge conflicted; resolved by hand" if not clean
+               else "edited after the automatic merge")
+        res.residual = diff_trees(expected, shipped, repo=repo)
+        if identity_approved:
+            # The shipped tree itself was approved, so the residual was seen.
+            res.add("merge transform", "WARN",
+                    f"shipped is not the automatic merge ({why}); the shipped tree was approved as such")
+        else:
+            res.add("merge transform", "FAIL",
+                    f"residual — bytes shipped that are not the automatic merge of the reviewed head ({why})")
+
+    # 2b. approval binding: does an approval cover the shipped tree, either
+    # directly (identity) or through the replay above?
     covered = False
     if not approvals:
         res.add("approval binding", "FAIL", "no approvals in record")
@@ -377,42 +417,13 @@ def verify(record, repo=".", bundle_path=None, signer_repo=None,
         if over == shipped:
             res.add("approval binding", "PASS", "identity — approved tree is the shipped tree")
             covered = True
-            continue
-
-        # The approved tree is not the shipped tree. Replay before failing.
-        #
-        # For a true merge commit the replay inputs come from the object graph,
-        # not from the record: parents cannot be misreported without changing
-        # the commit that is being verified. The record is only trusted for a
-        # squash, where the reviewed head is no longer reachable from the merge.
-        graph_parents = parents_of(merged_ref, repo=repo) if merged_ref else []
-        if len(graph_parents) >= 2:
-            clean, expected = replay_merge(graph_parents, repo=repo)
-            source = f"{len(graph_parents)} parents, from the commit graph"
-        else:
-            base, head = mt.get("base_at_merge"), mt.get("reviewed_head")
-            if not (base and head):
-                res.add("approval binding", "FAIL", "tree mismatch and no merge_transform to replay")
-                continue
-            clean, expected = merge_tree(base, head, repo=repo)
-            source = "recorded squash inputs"
-        recorded = bare(mt.get("expected_tree"))
-        if recorded and expected and recorded != expected:
-            res.add("replay drift", "WARN",
-                    f"recomputed {expected[:12]} != recorded {recorded[:12]} "
-                    f"(strategy/git_version differ?)")
-        if expected == shipped:
+        elif expected is None:
+            res.add("approval binding", "FAIL", "tree mismatch and no merge_transform to replay")
+        elif expected == shipped:
             res.add("approval binding", "PASS", f"replay ({source}) — shipped is the automatic merge, exactly")
             covered = True
         else:
-            detail = "residual — bytes shipped that no approval covers"
-            if len(graph_parents) >= 2:
-                detail += " (evil merge: edits made inside the merge commit)"
-            elif not clean:
-                detail += " (merge conflicted)"
-            res.add("approval binding", "FAIL", detail)
-            if expected:
-                res.residual = diff_trees(expected, shipped, repo=repo)
+            res.add("approval binding", "FAIL", "residual — bytes shipped that no approval covers")
 
     # 3. check coverage
     #
@@ -550,10 +561,35 @@ def cmd_intoto(args):
     print()
 
 
+VERDICTS = {
+    "FAIL": "UNVERIFIED",
+    # Never claim VERIFIED while any claim went unchecked (SPEC §6).
+    "INCOMPLETE": "INCOMPLETE — signatures not checked; this is not a verification",
+    "WARN": "VERIFIED (with warnings)",
+    "PASS": "VERIFIED",
+}
+
+
 def cmd_verify(args):
     record = json.load(open(args.record))
     res = verify(record, repo=args.repo, bundle_path=args.bundle,
                  signer_repo=args.signer_repo, statement_path=args.statement)
+    worst = res.worst
+
+    if args.json:
+        # Machine-readable form for automation (the GitHub Action reads this).
+        # Same content as the report below, same exit code; nothing is decided
+        # here that the human report would not show.
+        json.dump({
+            "schema": SCHEMA,
+            "verdict": VERDICTS[worst],
+            "worst": worst,
+            "steps": [{"step": st, "status": status, "detail": detail}
+                      for st, status, detail in res.steps],
+            "residual": res.residual,
+        }, sys.stdout, indent=2)
+        print()
+        return 1 if worst == "FAIL" else 0
 
     width = max(len(s[0]) for s in res.steps)
     for step, status, detail in res.steps:
@@ -566,15 +602,7 @@ def cmd_verify(args):
             if line.startswith(("+", "-")) and not line.startswith(("+++", "---")):
                 print(f"      {line}")
 
-    worst = res.worst
-    verdict = {
-        "FAIL": "UNVERIFIED",
-        # Never claim VERIFIED while any claim went unchecked (SPEC §6).
-        "INCOMPLETE": "INCOMPLETE — signatures not checked; this is not a verification",
-        "WARN": "VERIFIED (with warnings)",
-        "PASS": "VERIFIED",
-    }[worst]
-    print(f"\n  VERDICT: {verdict}")
+    print(f"\n  VERDICT: {VERDICTS[worst]}")
     return 1 if worst == "FAIL" else 0
 
 
@@ -598,6 +626,8 @@ def main():
     v.add_argument("--bundle", help="Sigstore bundle over the in-toto Statement")
     v.add_argument("--signer-repo", help="owner/name whose workflow must have signed (R4)")
     v.add_argument("--statement", help="the signed in-toto Statement, when the bundle is detached")
+    v.add_argument("--json", action="store_true",
+                   help="emit the result as JSON instead of the human report (same exit code)")
     v.set_defaults(func=cmd_verify)
 
     i = sub.add_parser("intoto", help="re-express a record as an in-toto Statement")

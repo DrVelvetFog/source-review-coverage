@@ -1,0 +1,88 @@
+name: Source Review Coverage
+description: >-
+  Evidence, recomputable by a stranger, that the code which shipped is the code a
+  human approved — a signed in-toto attestation for every merge, in one line.
+author: Tony Jagodka
+branding:
+  icon: check-square
+  color: green
+
+inputs:
+  mode:
+    description: "auto (from the event), push, or pull_request"
+    default: auto
+  fail-on:
+    description: "never | signature | residual — what makes the step fail"
+    default: signature
+  sign:
+    description: "Sign the statement with the workflow identity (needs id-token: write)"
+    default: "true"
+  upload:
+    description: "Upload record, statement, bundle and residual as a workflow artifact"
+    default: "true"
+  checkout:
+    description: "Check the repository out (full history) inside the action. Set false if you already did."
+    default: "true"
+  declared-by:
+    description: "Recorded as the asserting party for authorship (issuer-asserted, never verified)"
+    default: github-actions
+  sigstore-version:
+    description: "Pinned sigstore-python version used for signing and signature verification"
+    default: "4.5.0"
+  artifact-name:
+    description: "Name of the uploaded artifact"
+    default: source-review-coverage-attestation
+
+outputs:
+  verdict:
+    description: "VERIFIED, VERIFIED (with warnings), INCOMPLETE …, UNVERIFIED, or SKIPPED"
+    value: ${{ steps.attest.outputs.verdict }}
+  signatures:
+    description: "PASS, FAIL or INCOMPLETE for the signature check"
+    value: ${{ steps.attest.outputs.signatures }}
+  residual:
+    description: "Path to residual.diff when bytes shipped that no approval covers; empty otherwise"
+    value: ${{ steps.attest.outputs.residual }}
+  record:
+    description: "Path to record.json"
+    value: ${{ steps.attest.outputs.record }}
+  statement:
+    description: "Path to the in-toto statement.json"
+    value: ${{ steps.attest.outputs.statement }}
+  bundle:
+    description: "Path to the Sigstore bundle, when signed"
+    value: ${{ steps.attest.outputs.bundle }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check out with full history (replay needs it)
+      if: ${{ inputs.checkout == 'true' }}
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Record, sign, verify
+      id: attest
+      shell: bash
+      env:
+        SRC_MODE: ${{ inputs.mode }}
+        SRC_FAIL_ON: ${{ inputs.fail-on }}
+        SRC_SIGN: ${{ inputs.sign }}
+        SRC_DECLARED_BY: ${{ inputs.declared-by }}
+        SRC_SIGSTORE_VERSION: ${{ inputs.sigstore-version }}
+        SRC_SIGNER_REPO: ${{ github.repository }}
+      run: bash "${{ github.action_path }}/action/attest.sh"
+
+    - name: Upload the attestation
+      if: ${{ inputs.upload == 'true' && steps.attest.outputs.verdict != 'SKIPPED' && always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ steps.attest.outputs.dir }}/record.json
+          ${{ steps.attest.outputs.dir }}/statement.json
+          ${{ steps.attest.outputs.dir }}/statement.sigstore.json
+          ${{ steps.attest.outputs.dir }}/residual.diff
+          ${{ steps.attest.outputs.dir }}/verify.json
+        if-no-files-found: ignore
