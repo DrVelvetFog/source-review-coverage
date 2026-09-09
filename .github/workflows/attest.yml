@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # A local action reference needs the repository present first.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

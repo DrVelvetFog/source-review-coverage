@@ -6,7 +6,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: git config --global user.email ci@ci && git config --global user.name ci
       - run: curl -fsSL https://raw.githubusercontent.com/DrVelvetFog/verified-examples/main/xv -o xv && chmod +x xv
       - run: ./xv check --rerun --strict
