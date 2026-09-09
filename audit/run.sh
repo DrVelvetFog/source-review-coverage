@@ -43,7 +43,11 @@ import json, subprocess, sys
 tpl, out, repo, branch, limit = sys.argv[1:6]
 m = json.load(open(f"{out}/merge.json"))
 q = json.load(open(f"{out}/squash.json"))
-head = subprocess.run(["git", "-C", repo, "rev-parse", "--short", branch], capture_output=True, text=True).stdout.strip()
+head = ""
+for ref in (branch, f"origin/{branch}", "HEAD"):
+    r = subprocess.run(["git", "-C", repo, "rev-parse", "--short", "--verify", "-q", ref], capture_output=True, text=True)
+    if r.returncode == 0:
+        head = r.stdout.strip(); break
 origin = subprocess.run(["git", "-C", repo, "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip() or repo
 
 cov = ["| scan | sampled | identity or replay | residual | residual with a clean replay |", "|---|---|---|---|---|"]
