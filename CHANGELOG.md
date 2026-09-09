@@ -19,6 +19,13 @@ lives in its type URI and changes on its own clock.
   runs on every push as an attested example) and `.github/workflows/release.yml`, which
   runs the action at the tag on every published release and attaches the tag's own
   attestation to the release page. (#7)
+- The Agent Audit: `audit/TEMPLATE.md` (coverage findings, residual inventory,
+  agent-action journal, example drift, findings each with an evidence tier, what the
+  audit does not establish), `audit/run.sh` that generates the first two sections from
+  a clone, and the scanners it runs, `tools/scan.py` and `tools/scan_squash.py`, now in
+  the repository with `--json`. `audit/samples/openmed-2026-07-28.md` reproduces the
+  specification's Appendix A on the same clone: 400 merges, 336 identity, 64 residual,
+  none with a clean replay. `docs/audit.md`. (#10)
 - The residual as a pull-request comment: when bytes shipped that no approval covers, the
   action posts one comment with the verdict, each approval and the revision it was given
   on, and the residual as a diff, truncated at a fixed size with a link to the artifact.
