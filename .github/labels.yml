@@ -1,0 +1,33 @@
+# The labels this repository uses. Colours are hex without '#'.
+# Maintainers apply labels; contributors ask. To recreate them on a fresh
+# repository, see "Labels" in CONTRIBUTING.md.
+- name: roadmap-v1
+  color: 5319e7
+  description: V1 horizon backlog
+- name: P0
+  color: b60205
+  description: Critical
+- name: P1
+  color: d93f0b
+  description: High
+- name: P2
+  color: fbca04
+  description: Normal
+- name: help wanted
+  color: "008672"
+  description: Extra attention is needed
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+- name: spec
+  color: 0e8a16
+  description: Specification / predicate
+- name: integration
+  color: c5def5
+  description: Maintainer pull request carrying an external contribution, authorship preserved
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+- name: documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
