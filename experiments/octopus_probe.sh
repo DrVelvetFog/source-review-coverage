@@ -19,14 +19,22 @@
 # (its reproduction is left on disk and the path is printed), 2 on a
 # harness error unrelated to the question being probed.
 #
+# Environment:
+#   RENAMES=0    disable the rename edit kind (the rename-free control)
+#   FOLD_OPTS=   extra options for the fold's merge-tree step, for example
+#                FOLD_OPTS="-X no-renames" to model native octopus, which
+#                does no rename detection
+#
 # Requires: git, bash, mktemp. No network, no third-party packages —
 # consistent with the verifier's own "stdlib and git only" rule (spec
-# design rule, brief §3).
+# design rule, brief §3). Portable across GNU and BSD userlands.
 
 set -u -o pipefail
 
 TRIALS="${1:-120}"
 SEED="${2:-12345}"
+RENAMES="${RENAMES:-1}"
+FOLD_OPTS="${FOLD_OPTS:-}"
 RANDOM=$SEED
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/octopus_probe.XXXXXX")"
@@ -51,7 +59,8 @@ left_fold() {
   local i
   for ((i = 1; i < ${#parents[@]}; i++)); do
     local out rc
-    out="$(git -C "$repo" merge-tree --write-tree "$acc" "${parents[$i]}" 2>/dev/null)"
+    # shellcheck disable=SC2086
+    out="$(git -C "$repo" merge-tree --write-tree $FOLD_OPTS "$acc" "${parents[$i]}" 2>/dev/null)"
     rc=$?
     tree="$(printf '%s\n' "$out" | head -n1)"
     if [ "$rc" -ne 0 ]; then clean=1; fi
@@ -114,7 +123,11 @@ run_trial() {
         else
           line=$((1 + RANDOM % 5))
         fi
-        [ -f "$repo/$file.txt" ] && sed -i "s/^$file-line$line\$/$file-line$line-br$b-e$e/" "$repo/$file.txt"
+        if [ -f "$repo/$file.txt" ]; then
+          # Through a temporary file: `sed -i` differs between GNU and BSD.
+          sed "s/^$file-line$line\$/$file-line$line-br$b-e$e/" "$repo/$file.txt" > "$repo/$file.txt.tmp" \
+            && mv "$repo/$file.txt.tmp" "$repo/$file.txt"
+        fi
       elif [ "$kind" -eq 1 ]; then
         # New file, unique per branch: never conflicts by construction.
         echo "new-br$b-e$e" > "$repo/new_br${b}_e${e}.txt"
@@ -125,7 +138,7 @@ run_trial() {
       else
         # Rename with a content tweak, to exercise merge-ort's rename
         # detection rather than only line edits.
-        if [ -f "$repo/b.txt" ] && [ "$e" -eq 0 ]; then
+        if [ "$RENAMES" = 1 ] && [ -f "$repo/b.txt" ] && [ "$e" -eq 0 ]; then
           git -C "$repo" mv b.txt "renamed_br${b}.txt" 2>/dev/null || true
           echo "tail-br$b" >> "$repo/renamed_br${b}.txt" 2>/dev/null || true
         fi
@@ -181,7 +194,7 @@ for ((n = 0; n < TRIALS; n++)); do
 done
 
 echo "----------------------------------------------------------------------"
-echo "octopus_probe: $TRIALS trials, seed=$SEED"
+echo "octopus_probe: $TRIALS trials, seed=$SEED, renames=$RENAMES, fold_opts=${FOLD_OPTS:-none}"
 echo "  native octopus succeeded : $octopus_ok"
 echo "  native octopus refused   : $octopus_refused"
 echo "  agreed with left fold    : $agree"

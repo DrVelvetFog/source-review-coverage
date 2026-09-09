@@ -26,6 +26,12 @@ lives in its type URI and changes on its own clock.
   the repository with `--json`. `audit/samples/openmed-2026-07-28.md` reproduces the
   specification's Appendix A on the same clone: 400 merges, 336 identity, 64 residual,
   none with a clean replay. `docs/audit.md`. (#10)
+- `experiments/octopus_probe.sh` and `experiments/octopus_probe.md`: a random
+  N-parent merge generator that compares Git's native octopus strategy with the
+  verifier's left fold, and the answer: not equivalent when two parents rename one path
+  differently, because octopus does no rename detection and `merge-tree` does. Folding
+  with `-X no-renames` closes the gap on every trial; the verifier change is CE-019. By
+  @kshivam4781. (#12, #24)
 - The residual as a pull-request comment: when bytes shipped that no approval covers, the
   action posts one comment with the verdict, each approval and the revision it was given
   on, and the residual as a diff, truncated at a fixed size with a link to the artifact.
