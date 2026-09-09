@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: The specification
+    url: https://drvelvetfog.github.io/source-review-coverage/v0.1
+    about: What a record contains, how a verifier recomputes it, and what a pass does not establish.
+  - name: Install the action
+    url: https://github.com/marketplace/actions/source-review-coverage
+    about: One line in a workflow. Start here before filing anything.

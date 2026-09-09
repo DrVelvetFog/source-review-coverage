@@ -9,6 +9,10 @@ lives in its type URI and changes on its own clock.
 
 ### Added
 
+- Intake: issue templates (task, bug, specification question) that produce the backlog
+  block unchanged, a pull-request template, `.github/labels.yml` with the labels the
+  tracker uses, and `CONTRIBUTING.md` with the integration pull-request pattern, the
+  commit-authorship rule and how to run everything locally. (#8)
 - The residual as a pull-request comment: when bytes shipped that no approval covers, the
   action posts one comment with the verdict, each approval and the revision it was given
   on, and the residual as a diff, truncated at a fixed size with a link to the artifact.
