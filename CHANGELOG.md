@@ -16,6 +16,8 @@ lives in its type URI and changes on its own clock.
   replays unless `comment: always`; `comment: never` to disable. Needs
   `pull-requests: write`; without it the comment is rendered into the artifact and a
   warning says why. `tools/render_comment.py`, `tests/comment/`. (#3)
+- `docs/field-notes.md`: what happened on the first three repositories that are not this
+  one, what held, what a solo repository cannot show, and the friction found. (#6)
 
 ## [0.2.1] - 2026-09-08
 
