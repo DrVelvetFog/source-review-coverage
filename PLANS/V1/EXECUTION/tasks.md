@@ -340,3 +340,30 @@ existing accounts, and the billing path via GitHub Marketplace. No code.
 **Files.** `PLANS/V1/DESIGN/org-report.md`.
 
 Task: CE-017 · Milestone: v0.5 · Priority: P2 · Size: M · Depends on: CE-014 · Brief: §5 v0.5, §6 L4
+
+---
+
+## CE-018 — Node 24 runtime for the actions this action pins
+
+**Summary.** Found by CE-006. `action.yml` pins `actions/checkout@v4` and
+`actions/upload-artifact@v4`, both of which declare Node 20; every run on every consumer
+now prints a deprecation warning and the runner forces Node 24. Pin the majors that
+declare Node 24 before the forcing stops.
+
+**Scope.**
+- `action.yml`: `actions/checkout@v7`, `actions/upload-artifact@v7`.
+- The two workflows in this repository: the same pins.
+- CHANGELOG entry under Changed.
+
+**Acceptance criteria.**
+- A pull-request run and a push-to-`main` run on this repository with no
+  `Node.js 20 is deprecated` warning.
+- The three CE-006 repositories show the same after the next `v1` re-float.
+
+**Out of scope.** Any behaviour change in the checkout itself (v7 refuses fork checkouts
+on `pull_request_target`; this action never runs on that event).
+
+**Files.** `action.yml`, `.github/workflows/attest.yml`,
+`.github/workflows/verified-examples.yml`, `CHANGELOG.md`.
+
+Task: CE-018 · Milestone: v0.3 · Priority: P2 · Size: S · Depends on: — · Brief: §4.1
