@@ -1,0 +1,32 @@
+# On every published release, run the action at the tag and attach the tag's own
+# attestation to the release page, so the release itself carries recomputable evidence.
+name: release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write        # attach files to the release
+  id-token: write        # the workflow identity signs (rule R4)
+  pull-requests: read    # find the merged pull request behind the tagged commit
+jobs:
+  attest-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - id: attest
+        uses: ./
+        with:
+          checkout: "false"
+          mode: push
+          fail-on: signature
+          comment: never
+      - name: Attach the attestation to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          dir="$(dirname "${{ steps.attest.outputs.record }}")"
+          gh release upload "$TAG" "$dir"/record.json "$dir"/statement.json "$dir"/statement.sigstore.json "$dir"/verify.json --clobber

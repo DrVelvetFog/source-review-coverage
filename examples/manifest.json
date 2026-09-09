@@ -16,6 +16,11 @@
       "id": "comment-tests",
       "path": "tests/comment/test_render_comment.sh",
       "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1"
+    },
+    {
+      "id": "release-check",
+      "path": "tools/release_check.sh",
+      "command": "bash tools/release_check.sh"
     }
   ]
 }

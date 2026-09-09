@@ -13,6 +13,12 @@ lives in its type URI and changes on its own clock.
   block unchanged, a pull-request template, `.github/labels.yml` with the labels the
   tracker uses, and `CONTRIBUTING.md` with the integration pull-request pattern, the
   commit-authorship rule and how to run everything locally. (#8)
+- The release train: `docs/RELEASING.md` (the fortnight checklist), `tools/release_check.sh`
+  (the action description within the Marketplace's 125 characters, branding, `VERSION`
+  against the changelog and the tag, examples attested against the version, clean tree;
+  runs on every push as an attested example) and `.github/workflows/release.yml`, which
+  runs the action at the tag on every published release and attaches the tag's own
+  attestation to the release page. (#7)
 - The residual as a pull-request comment: when bytes shipped that no approval covers, the
   action posts one comment with the verdict, each approval and the revision it was given
   on, and the residual as a diff, truncated at a fixed size with a link to the artifact.

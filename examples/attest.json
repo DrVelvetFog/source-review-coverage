@@ -23,7 +23,7 @@
      "bytes": 226,
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
-    "ran_at": "2026-09-08T14:17:39Z",
+    "ran_at": "2026-09-09T12:07:29Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -53,7 +53,7 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-08T14:17:45Z",
+    "ran_at": "2026-09-09T12:07:35Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -83,7 +83,37 @@
      "bytes": 20,
      "tail": "passed 14, failed 0\n"
     },
-    "ran_at": "2026-09-08T14:17:48Z",
+    "ran_at": "2026-09-09T12:07:37Z",
+    "runner": {
+     "os": "darwin",
+     "python": "3.14.6",
+     "ci": false
+    }
+   }
+  },
+  {
+   "_type": "https://in-toto.io/Statement/v1",
+   "subject": [
+    {
+     "name": "tools/release_check.sh",
+     "digest": {
+      "sha256": "d89822cfe4ac5b45dcaff3bc5141c170e47db6fadc1baaa5904228a845cd3385"
+     }
+    }
+   ],
+   "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
+   "predicate": {
+    "id": "release-check",
+    "package": "source-review-coverage",
+    "version": "0.2.1",
+    "command": "bash tools/release_check.sh",
+    "exit": 0,
+    "stdout": {
+     "sha256": "c600d3cfa3bdc3018b9e2ac285a876d807d63ae33092f9a6cee8fbbd1bc2daa2",
+     "bytes": 351,
+     "tail": "ding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.2.1\n  \u2713 changelog                    PASS  newest entry [0.2.1], unreleased entries pending\nrelease check: PASS\n"
+    },
+    "ran_at": "2026-09-09T12:07:37Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",

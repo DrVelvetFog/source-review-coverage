@@ -7,6 +7,7 @@
 - [Field notes: the first three repositories](docs/field-notes.md)
 - [Specification v0.1](v0.1/index.md)
 - [CHANGELOG](CHANGELOG.md)
+- [Releasing](docs/RELEASING.md)
 
 ## Verified examples
 
