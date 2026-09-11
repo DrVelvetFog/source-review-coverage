@@ -23,6 +23,11 @@
       "command": "bash tests/replay/test_octopus_replay.sh 2>/dev/null | tail -1"
     },
     {
+      "id": "check-run-tests",
+      "path": "tests/check/test_render_check.sh",
+      "command": "bash tests/check/test_render_check.sh 2>/dev/null | tail -1"
+    },
+    {
       "id": "release-check",
       "path": "tools/release_check.sh",
       "command": "bash tools/release_check.sh"

@@ -36,6 +36,9 @@ inputs:
   comment:
     description: "residual posts one PR comment only when bytes shipped that no approval covers; always posts the verdict on every run; never. Needs pull-requests: write."
     default: residual
+  check:
+    description: "residual creates a check run with inline annotations on the residual lines; always creates one on every run (what a required check needs); never. Needs checks: write."
+    default: never
 
 outputs:
   verdict:
@@ -65,6 +68,9 @@ outputs:
   comment:
     description: "URL of the pull request comment, when one was posted or updated"
     value: ${{ steps.attest.outputs.comment }}
+  check:
+    description: "URL of the check run, when one was created"
+    value: ${{ steps.attest.outputs.check }}
 
 runs:
   using: composite
@@ -87,6 +93,7 @@ runs:
         SRC_SIGNER_REPO: ${{ github.repository }}
         SRC_APPROVALS: ${{ inputs.approvals }}
         SRC_COMMENT: ${{ inputs.comment }}
+        SRC_CHECK: ${{ inputs.check }}
         SRC_ARTIFACT_NAME: ${{ inputs.artifact-name }}
         GITHUB_TOKEN: ${{ github.token }}   # the workflow's own token; never a personal one
       run: bash "${{ github.action_path }}/action/attest.sh"

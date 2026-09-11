@@ -22,6 +22,7 @@ set -euo pipefail
 : "${GITHUB_EVENT_NAME:=push}"
 : "${SRC_APPROVALS:=auto}"           # auto | off  (auto = read the PR's reviews with the workflow token)
 : "${SRC_COMMENT:=residual}"         # residual | always | never  (one PR comment, edited on re-runs)
+: "${SRC_CHECK:=never}"              # never | residual | always  (a check run w/ inline annotations; needs checks: write)
 : "${SRC_ARTIFACT_NAME:=source-review-coverage-attestation}"
 
 case "$SRC_FAIL_ON" in
@@ -33,6 +34,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CEB="$here/../tools/ceb.py"
 FORGE="$here/forge_github.py"
 RENDER="$here/../tools/render_comment.py"
+RENDER_CHECK="$here/../tools/render_check.py"
 mkdir -p "$SRC_OUT"
 
 out() { printf '%s=%s\n' "$1" "$2" >> "$GITHUB_OUTPUT"; }
@@ -51,7 +53,7 @@ if [ "$mode" = auto ]; then
   esac
 fi
 
-pr=""; approvals_file=""; n_approvals=0
+pr=""; approvals_file=""; n_approvals=0; check_sha=""
 record_args=()
 
 # Approvals come from the forge's review data, read with the workflow's own
@@ -87,6 +89,8 @@ elif [ "$mode" = pull_request ]; then
 import json, sys
 e = json.load(open(sys.argv[1]))["pull_request"]
 print(e["number"], e["base"]["sha"], e["head"]["sha"], (e["head"].get("repo") or {}).get("full_name") or "-")' "$GITHUB_EVENT_PATH")
+  check_sha="$head"   # captured before approvals may repoint head: a check run
+                      # attaches to the PR's head sha or the Files tab never sees it
   merged=HEAD   # actions/checkout gives the merge ref; its parents are base and head
   if [ "$SRC_SIGN" = true ] && [ "$head_repo" != "-" ] && [ "$head_repo" != "$SRC_SIGNER_REPO" ]; then
     warn "pull request from a fork ($head_repo): no id-token is available, so this run cannot sign"
@@ -100,6 +104,7 @@ print(e["number"], e["base"]["sha"], e["head"]["sha"], (e["head"].get("repo") or
   fi
 else
   merged=HEAD; head=HEAD
+  check_sha=$(git -C "$SRC_REPO" rev-parse HEAD)
   if git -C "$SRC_REPO" rev-parse --verify -q HEAD^ >/dev/null; then
     base=HEAD^
   else
@@ -209,6 +214,29 @@ if [ "$SRC_COMMENT" != never ] && [ -n "${pr:-}" ]; then
       note "pull request comment $posted"; out comment "${posted#* }"
     else
       warn "comment not posted (${posted##*-> }); the job needs 'permissions: pull-requests: write' to comment"
+    fi
+  fi
+fi
+
+# ---- 5c. a check run: the verdict in the checks list, annotations on the ----
+# residual lines. Rendered under the same residual/always/never rule as the
+# comment; the conclusion follows fail-on (failure when this run is failing,
+# success only for VERIFIED, neutral otherwise — neutral passes branch
+# protection without painting UNVERIFIED green).
+case "$SRC_CHECK" in never|residual|always) ;; *) die "check must be never, residual or always (got '$SRC_CHECK')" ;; esac
+if [ "$SRC_CHECK" != never ] && [ -n "$check_sha" ]; then
+  check_args=(--head-sha "$check_sha" --artifact "$SRC_ARTIFACT_NAME")
+  [ -n "${GITHUB_SERVER_URL:-}" ] && [ -n "${GITHUB_RUN_ID:-}" ] && check_args+=(--run-url "$GITHUB_SERVER_URL/$SRC_SIGNER_REPO/actions/runs/$GITHUB_RUN_ID")
+  [ "$SRC_CHECK" = always ] && check_args+=(--always)
+  [ "$RC" != 0 ] && check_args+=(--fail)
+  python3 "$RENDER_CHECK" "$SRC_OUT/verify.json" "$SRC_OUT/record.json" "${check_args[@]}" > "$SRC_OUT/check.json"
+  if [ -s "$SRC_OUT/check.json" ]; then
+    if [ -z "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]; then
+      warn "check run rendered but not created: no GITHUB_TOKEN"
+    elif churl=$(python3 "$FORGE" check-run "$SRC_SIGNER_REPO" --payload-file "$SRC_OUT/check.json" 2>&1); then
+      note "check run created"; out check "$churl"
+    else
+      warn "check run not created (${churl##*-> }); the job needs 'permissions: checks: write'"
     fi
   fi
 fi

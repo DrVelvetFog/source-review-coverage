@@ -111,6 +111,13 @@ def approvals(repo, number):
     }
 
 
+def check_run(repo, payload):
+    """Create a check run. No find-and-edit as with comments: a check run is
+    per-sha and a newer run under the same name supersedes it in the UI."""
+    c = get(f"/repos/{repo}/check-runs", method="POST", body=payload)
+    return c.get("html_url") or ""
+
+
 def comment(repo, number, marker, body):
     """One comment per pull request: find the earlier one by its marker and edit
     it, else create. The marker is an HTML comment, invisible when rendered."""
@@ -132,6 +139,8 @@ def main(argv):
     elif len(argv) == 4 and argv[1] == "approvals":
         json.dump(approvals(argv[2], int(argv[3])), sys.stdout, indent=2)
         print()
+    elif len(argv) == 5 and argv[1] == "check-run" and argv[3] == "--payload-file":
+        print(check_run(argv[2], json.load(open(argv[4], encoding="utf-8"))))
     else:
         sys.exit(__doc__)
 
