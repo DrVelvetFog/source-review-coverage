@@ -18,6 +18,11 @@
       "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1"
     },
     {
+      "id": "octopus-replay-tests",
+      "path": "tests/replay/test_octopus_replay.sh",
+      "command": "bash tests/replay/test_octopus_replay.sh 2>/dev/null | tail -1"
+    },
+    {
       "id": "release-check",
       "path": "tools/release_check.sh",
       "command": "bash tools/release_check.sh"

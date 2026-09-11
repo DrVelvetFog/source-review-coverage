@@ -21,9 +21,11 @@
 #
 # Environment:
 #   RENAMES=0    disable the rename edit kind (the rename-free control)
-#   FOLD_OPTS=   extra options for the fold's merge-tree step, for example
-#                FOLD_OPTS="-X no-renames" to model native octopus, which
-#                does no rename detection
+#   FOLD_OPTS=   extra options for the fold's merge-tree step. Defaults to
+#                "-X no-renames", matching replay_merge()'s ≥3-parent path
+#                since CE-019 (native octopus does no rename detection).
+#                Set FOLD_OPTS= (empty) for the rename-detecting fold that
+#                CE-012 showed diverging.
 #
 # Requires: git, bash, mktemp. No network, no third-party packages —
 # consistent with the verifier's own "stdlib and git only" rule (spec
@@ -34,7 +36,7 @@ set -u -o pipefail
 TRIALS="${1:-120}"
 SEED="${2:-12345}"
 RENAMES="${RENAMES:-1}"
-FOLD_OPTS="${FOLD_OPTS:-}"
+FOLD_OPTS="${FOLD_OPTS--X no-renames}"
 RANDOM=$SEED
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/octopus_probe.XXXXXX")"
