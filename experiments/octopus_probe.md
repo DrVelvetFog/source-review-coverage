@@ -54,3 +54,15 @@ that is CE-019. The two-parent path keeps rename detection, because that is what
 forges' merge does.
 
 The rename-free control is `RENAMES=0 experiments/octopus_probe.sh 60 12345`.
+
+## Resolved (CE-019, 2026-09-11)
+
+`replay_merge()` now folds three-or-more-parent merges with `-X no-renames`; two-parent
+merges keep rename detection. The strategy the fold ran under is recorded in
+`mergeTransform.strategy`, so a verifier reports drift instead of assuming. With the
+fix in place, `experiments/octopus_probe.sh 120 12345` — whose default fold once again
+mirrors the verifier — reports 0 disagreements; set `FOLD_OPTS=` (empty) to reproduce
+the rename-detecting fold this probe originally falsified. The fixture that pins the
+behaviour is `tests/replay/test_octopus_replay.sh`: a rename/rename(1:2) octopus merge
+that native Git accepts cleanly, must replay to the identical tree, and still conflicts
+under a rename-detecting fold.

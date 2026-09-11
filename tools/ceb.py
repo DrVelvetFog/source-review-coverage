@@ -52,7 +52,7 @@ def git_version(repo="."):
     return out.replace("git version ", "").split()[0]
 
 
-def merge_tree(base, head, repo="."):
+def merge_tree(base, head, repo=".", extra=()):
     """Replay: the merge the forge performed, computed without a worktree.
 
     Inputs are resolved to object IDs first, and that is load-bearing rather
@@ -65,7 +65,7 @@ def merge_tree(base, head, repo="."):
     is not an error here — it is the finding (SPEC §5a)."""
     base_oid, _ = git("rev-parse", base, repo=repo)
     head_oid, _ = git("rev-parse", head, repo=repo)
-    out, rc = git("merge-tree", "--write-tree", base_oid, head_oid, repo=repo, check=False)
+    out, rc = git("merge-tree", "--write-tree", *extra, base_oid, head_oid, repo=repo, check=False)
     first = out.splitlines()[0] if out else ""
     return (rc == 0, first or None)
 
@@ -83,7 +83,11 @@ def replay_merge(parents, repo="."):
 
     A merge commit carries its replay inputs in the object graph, so unlike a
     squash it needs nothing recorded alongside it — the verifier reads them off
-    the commit. Octopus merges are folded left in recorded parent order.
+    the commit. Octopus merges are folded left in recorded parent order, with
+    rename detection off: native octopus does none, and a fold that detects
+    renames reports CONFLICT (rename/rename) on merges octopus accepted cleanly
+    (CE-012, experiments/octopus_probe.md). Two-parent merges keep rename
+    detection, because that is what the forges' merge does.
 
     Note: this writes tree (and, for 3+ parents, commit) objects into the
     repository. They are unreferenced and get collected; a verifier that must
@@ -95,7 +99,7 @@ def replay_merge(parents, repo="."):
 
     acc, clean = parents[0], True
     for p in parents[1:]:
-        ok, tree = merge_tree(acc, p, repo=repo)
+        ok, tree = merge_tree(acc, p, repo=repo, extra=("-X", "no-renames"))
         clean = clean and ok
         if not tree:
             return (False, None)
@@ -245,7 +249,7 @@ def cmd_record(args):
             "base_at_merge": git("rev-parse", args.base, repo=repo)[0],
             "expected_tree": f"git-{fmt}:{expected}" if expected else None,
             "replay_clean": clean,
-            "strategy": "ort",
+            "strategy": "ort -X no-renames" if len(parents) >= 3 else "ort",
             "git_version": git_version(repo),
         },
     }

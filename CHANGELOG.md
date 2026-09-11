@@ -42,6 +42,17 @@ lives in its type URI and changes on its own clock.
 - `docs/field-notes.md`: what happened on the first three repositories that are not this
   one, what held, what a solo repository cannot show, and the friction found. (#6)
 
+### Fixed
+
+- `replay_merge()` folds a merge of three or more parents with `-X no-renames`, matching
+  Git's native octopus strategy, which does no rename detection. Before this, a clean
+  octopus merge whose parents rename one path two different ways replayed as a false
+  residual (found in #24). Two-parent merges keep rename detection, because that is what
+  the forges' merge does. The fold's strategy is now recorded in
+  `mergeTransform.strategy` (`ort` or `ort -X no-renames`), the probe's default fold
+  matches the verifier again, and `tests/replay/` holds a rename/rename(1:2) octopus
+  fixture that must replay to the identical tree. (#31)
+
 ### Changed
 
 - The actions this action pins, `actions/checkout` and `actions/upload-artifact`, moved
