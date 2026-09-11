@@ -139,7 +139,7 @@ How the reviewed state became the shipped state. Required where they differ.
 
 **`mergeTransform.baseAtMerge`** *object, required* — the revision the change landed on.
 
-**`mergeTransform.parents`** *array of objects, optional* — for `mergeCommit` only, in the order the commit records them. Order is normative: a conflicted replay is not symmetric in parent order.
+**`mergeTransform.parents`** *array of objects, optional* — for `mergeCommit` only, in the order the commit records them. Order is normative: a conflicted replay is not symmetric in parent order. A verifier that folds three or more parents pairwise with rename detection on does not reproduce Git's native octopus strategy, which has none, when two parents rename one path differently; a conforming verifier folds octopus merges without rename detection. See `experiments/octopus_probe.md` in the reference implementation.
 
 **`mergeTransform.expectedTree`** *object, optional* — the replay result computed at issuance.
 

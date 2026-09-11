@@ -367,3 +367,29 @@ on `pull_request_target`; this action never runs on that event).
 `.github/workflows/verified-examples.yml`, `CHANGELOG.md`.
 
 Task: CE-018 · Milestone: v0.3 · Priority: P2 · Size: S · Depends on: — · Brief: §4.1
+## CE-019 — Octopus replay without rename detection
+
+**Summary.** CE-012 (#24, @kshivam4781) showed the left fold diverges from Git's native
+octopus strategy when two parents rename one path differently: octopus does no rename
+detection, `merge-tree` does, so the fold reports `CONFLICT (rename/rename)` and a
+different tree where Git merged cleanly. A verifier would report a false residual.
+`merge-tree --write-tree -X no-renames` reproduces the octopus tree on every trial.
+
+**Scope.**
+- `tools/ceb.py` `replay_merge`: for three or more parents, fold with `-X no-renames`.
+  Two parents keep rename detection (that is what a forge's merge does).
+- Record the fold's strategy in the record (`mergeTransform.strategy`, already allowed
+  by the specification) so a verifier reports divergence instead of assuming.
+- Test: `FOLD_OPTS` in the probe becomes the default for the ≥3-parent path; a fixture
+  under `tests/` with a rename/rename(1:2) octopus merge that must replay `identity`.
+
+**Acceptance criteria.**
+- The fixture replays clean; `experiments/octopus_probe.sh 120 12345` with the fold the
+  verifier uses reports 0 disagreements.
+- `experiments/octopus_probe.md` updated with the result.
+
+**Out of scope.** Octopus merges produced by anything other than `git merge`.
+
+**Files.** `tools/ceb.py`, `tests/`, `experiments/octopus_probe.md`, `CHANGELOG.md`.
+
+Task: CE-019 · Milestone: v0.3 · Priority: P1 · Size: S · Depends on: CE-012 · Brief: §2
