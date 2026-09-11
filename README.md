@@ -92,6 +92,7 @@ identity or replay, with zero false positives (specification, Appendix A).
 Predicate v0.1 submitted to the in-toto attestation framework as
 [in-toto/attestation#581](https://github.com/in-toto/attestation/pull/581), under review.
 Action `v1` tracks the latest `0.x` release; see [CHANGELOG.md](CHANGELOG.md). Plan and
-backlog: [PLANS/V1](PLANS/V1/HORIZON_BRIEF.md).
+backlog: [PLANS/V1](PLANS/V1/HORIZON_BRIEF.md). Maintenance runs on a fortnightly
+release train, funded by [GitHub Sponsors](https://github.com/sponsors/DrVelvetFog).
 
 Apache-2.0.

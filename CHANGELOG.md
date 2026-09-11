@@ -46,6 +46,9 @@ lives in its type URI and changes on its own clock.
   the git digest types the in-toto framework defines; an opt-in is proposed upstream as
   sigstore/sigstore-python#1899, and the verifier's DSSE-first fallback reverts by
   itself if it is accepted. (#13)
+- `.github/FUNDING.yml` and one README line: the project is sponsorable at
+  [github.com/sponsors/DrVelvetFog](https://github.com/sponsors/DrVelvetFog), with an
+  organisation tier that buys priority on issues. (#9)
 - The verdict as a check run: `check: residual` (or `always`, what a required check
   needs) creates a check run whose inline annotations carry the residual hunks, placed
   on the shipped tree's line numbers. The conclusion follows `fail-on` — `failure` when
