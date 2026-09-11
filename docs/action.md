@@ -74,6 +74,18 @@ re-runs the same comment is edited, found by a hidden marker, so a pull request 
 accumulates a thread of status posts. Clean replays and identities stay silent unless
 `comment: always`. Every comment ends with the specification's §6 line.
 
+## The check run
+
+With `check: residual` (or `always`) the verdict is also created as a check run, so it
+shows in the pull request's checks list and can be made a required check. Each residual
+hunk becomes an inline annotation carrying the hunk itself. The conclusion follows
+`fail-on`: `failure` when this run is failing, `success` only for `VERIFIED`, `neutral`
+otherwise — neutral passes branch protection without painting `UNVERIFIED` green, which
+matters on a repository where `UNVERIFIED` is the honest steady state. Needs
+`checks: write`. One caveat, stated rather than hidden: annotation positions are
+computed on the shipped tree, so on a pull request whose base has moved the Files-tab
+placement can drift; the diff quoted in the annotation is authoritative.
+
 ## Inputs
 
 | input | default | meaning |
@@ -88,12 +100,14 @@ accumulates a thread of status posts. Clean replays and identities stay silent u
 | `artifact-name` | `source-review-coverage-attestation` | Artifact name. |
 | `approvals` | `auto` | `auto` reads the pull request's reviews with the workflow token; `off` records none. |
 | `comment` | `residual` | One comment on the pull request, edited on re-runs rather than repeated. `residual` posts only when bytes shipped that no approval covers, with the diff; `always` posts the verdict on every run; `never`. Needs `pull-requests: write`; without it the comment is rendered into the artifact and a warning says why it was not posted. |
+| `check` | `never` | A check run with inline annotations on the residual lines. `residual` creates one only when bytes shipped that no approval covers; `always` creates one on every run, which is what a required check needs; `never`. Needs `checks: write`. |
 
 ## Outputs
 
 `verdict`, `signatures`, `residual` (path or empty), `record`, `statement`, `bundle`, `pr`
 (the pull request the approvals came from), `approvals` (how many effective approvals),
-`comment` (URL of the pull request comment, when one was posted).
+`comment` (URL of the pull request comment, when one was posted), `check` (URL of the
+check run, when one was created).
 
 ## Verifying it somewhere else
 

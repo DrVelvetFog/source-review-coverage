@@ -23,7 +23,7 @@
      "bytes": 226,
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
-    "ran_at": "2026-09-11T11:20:03Z",
+    "ran_at": "2026-09-11T11:40:32Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -53,7 +53,7 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-11T11:20:09Z",
+    "ran_at": "2026-09-11T11:40:37Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -83,7 +83,7 @@
      "bytes": 20,
      "tail": "passed 14, failed 0\n"
     },
-    "ran_at": "2026-09-11T11:20:11Z",
+    "ran_at": "2026-09-11T11:40:40Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -113,7 +113,37 @@
      "bytes": 19,
      "tail": "passed 5, failed 0\n"
     },
-    "ran_at": "2026-09-11T11:20:12Z",
+    "ran_at": "2026-09-11T11:40:41Z",
+    "runner": {
+     "os": "darwin",
+     "python": "3.14.6",
+     "ci": false
+    }
+   }
+  },
+  {
+   "_type": "https://in-toto.io/Statement/v1",
+   "subject": [
+    {
+     "name": "tests/check/test_render_check.sh",
+     "digest": {
+      "sha256": "88487608b749b1daf3b963a21345b691dd116228bf1450cad33ebd2ca914e960"
+     }
+    }
+   ],
+   "predicateType": "https://github.com/DrVelvetFog/verified-examples/v0",
+   "predicate": {
+    "id": "check-run-tests",
+    "package": "source-review-coverage",
+    "version": "0.2.1",
+    "command": "bash tests/check/test_render_check.sh 2>/dev/null | tail -1",
+    "exit": 0,
+    "stdout": {
+     "sha256": "bfccd2c7b8a2e90a403b91b5b992ebce1a3deb37ec00671442849aabb8120278",
+     "bytes": 20,
+     "tail": "passed 16, failed 0\n"
+    },
+    "ran_at": "2026-09-11T11:40:43Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -143,7 +173,7 @@
      "bytes": 351,
      "tail": "ding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.2.1\n  \u2713 changelog                    PASS  newest entry [0.2.1], unreleased entries pending\nrelease check: PASS\n"
     },
-    "ran_at": "2026-09-11T11:20:12Z",
+    "ran_at": "2026-09-11T11:40:43Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",

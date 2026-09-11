@@ -15,6 +15,7 @@ permissions:
   contents: read
   id-token: write      # ambient OIDC — the whole point
   pull-requests: write # read reviews; post the one status comment
+  checks: write        # the check run with inline residual annotations
 
 jobs:
   attest:
@@ -35,3 +36,4 @@ jobs:
           fail-on: signature
           # This repository shows its own verdict on every pull request.
           comment: always
+          check: always
