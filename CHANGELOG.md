@@ -55,6 +55,13 @@ lives in its type URI and changes on its own clock.
   the run is failing, `success` only for `VERIFIED`, `neutral` otherwise, so branch
   protection passes without painting `UNVERIFIED` green. Needs `checks: write`.
   `tools/render_check.py`, `tests/check/`. (#11)
+- `ceb.py verify-artifact <dir>`: one command for a consumer holding a downloaded artifact
+  and a clone. Recomputes the record's claims, checks the signature and binds it to a
+  workflow identity, and checks the statement is exactly what the record produces. Exit
+  `0` verified, `1` unverified, `2` incomplete, `3` malformed. Read-only by default: the
+  replay runs in a throwaway clone that borrows the repository's objects. (#4)
+- `verify` gains a statement-binding step. (#4)
+- `tests/verify/test_verify_artifact.sh` with a real workflow-signed fixture. (#4)
 
 ### Fixed
 
