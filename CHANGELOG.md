@@ -41,6 +41,11 @@ lives in its type URI and changes on its own clock.
   warning says why. `tools/render_comment.py`, `tests/comment/`. (#3)
 - `docs/field-notes.md`: what happened on the first three repositories that are not this
   one, what held, what a solo repository cannot show, and the friction found. (#6)
+- `docs/signing.md`: how the attestation is signed (the workflow's own OIDC identity,
+  rule R4) and why the envelope is detached rather than DSSE — sigstore-python rejects
+  the git digest types the in-toto framework defines; an opt-in is proposed upstream as
+  sigstore/sigstore-python#1899, and the verifier's DSSE-first fallback reverts by
+  itself if it is accepted. (#13)
 
 ### Fixed
 
