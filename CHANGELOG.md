@@ -67,6 +67,11 @@ lives in its type URI and changes on its own clock.
   matches the verifier again, and `tests/replay/` holds a rename/rename(1:2) octopus
   fixture that must replay to the identical tree. (#31)
 
+- `LICENSE` carries the full Apache-2.0 text. It previously held only the short-form
+  notice, which is not the licence and which GitHub's licence detection cannot read, so
+  the repository reported no licence at all while intending Apache-2.0. The licence
+  itself is unchanged; only the file that states it is now complete.
+
 ### Changed
 
 - The actions this action pins, `actions/checkout` and `actions/upload-artifact`, moved
