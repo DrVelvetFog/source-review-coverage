@@ -15,8 +15,16 @@ Coding agents now write a large share of the changes that land on `main`. The qu
 auditors, security teams and maintainers are starting to ask is not "was this AI-written"
 but "what did the agent change, and did a person actually approve *that*". Today the
 answer is asserted by the forge that performed the merge, to a consumer who cannot check
-it. SLSA v1.2 Source Track L4 already requires two-party review of the final revision and
-explicitly leaves the mechanism undefined (§4 of the spec).
+it. SLSA v1.2 Source Track L4 already requires two-party review, and requires it of the
+*final revision submitted*. Its reference implementation, `slsa-framework/source-tool`,
+satisfies that with a `REVIEW_ENFORCED` control checking the repository's branch
+protection: pull requests required, an approval required, stale approvals dismissed,
+approval of the most recent push. That establishes the gate is configured. It does not
+establish that the bytes which landed are the bytes somebody approved, and a
+configuration check cannot — the two come apart whenever a branch merges without being
+up to date, and whenever a control reads today's settings for a revision merged under
+last month's. This is the outcome half, and it composes with theirs (raised with them as
+slsa-framework/source-tool#450).
 
 The buyer is an engineering organisation under that pressure: SOC 2 CC6.8, HIPAA
 164.312(b), EU AI Act Arts. 12 and 19, ISO 42001 assessors. The user is whoever owns the
@@ -98,11 +106,26 @@ UIG Studios site.
 
 ### v0.4 — "measured" (days 60–90)
 
-Fifty repositories using the Action is the demand test. At ninety days the numbers that
-matter are: repositories using the Action, attestations issued, sponsors, inbound audit
-leads. Pull-request counts are not a metric. The decision at day 90: build the paid
-GitHub App (v0.5) or keep the Action free and treat the lane as standing rather than
-revenue.
+At ninety days the numbers that matter are: repositories using the Action, attestations
+issued, sponsors, inbound audit leads. Pull-request counts are not a metric. The decision
+at day 90: build the paid GitHub App (v0.5) or keep the Action free and treat the lane as
+standing rather than revenue.
+
+**The gate, amended 2026-09-17 (decision 7).** Fifty repositories was the original test.
+It is not reachable on the outreach this plan allows — one ask, once, in three
+communities, and no cold outreach beyond it — and a gate nobody can clear tells you
+nothing on the day it fails. Amending it after the count arrived would have been choosing
+the criterion to fit the number, so it is amended here, at day 9, with the count at zero
+and on the record in `docs/adoption.md`.
+
+The gate is now a floor, and v0.5 needs both halves: **at least one repository that is
+not mine running the Action, and at least one inbound conversation** — an audit lead, a
+sponsor, or a maintainer asking for something specific. Neither alone is enough. A caller
+with nobody attached is a workflow nobody reads; a conversation with no caller behind it
+is interest in me and not in this.
+
+Fifty stays written down as what adoption would look like, and it is not what v0.5 is
+gated on.
 
 ### v0.5 — paid tier (gated on v0.4)
 
@@ -133,8 +156,8 @@ GitHub before v0.5. Consolidating rv/ev/xv into this repository before there is 
 ## 8. Risks and what we do about them
 
 - **Incumbents**: GitHub artifact attestations, Chainguard, "SLSA for AI" efforts. We are
-  the predicate and verifier layer for a requirement SLSA published and left undefined;
-  compose with all of them, compete with none. The in-toto PR is the positioning move.
+  the predicate and verifier layer for a requirement SLSA's own tooling checks by
+  configuration; compose with all of them, compete with none. The in-toto PR is the positioning move.
 - **Silence**: fifty repositories may not come. That is what the demand test is for; the
   answer at day 90 is honest either way.
 - **Squash-heavy world**: most repositories squash, so the commercially relevant check is
@@ -154,3 +177,6 @@ GitHub before v0.5. Consolidating rv/ev/xv into this repository before there is 
    asks for a personal token.
 5. Residuals are rendered as diffs in a PR comment, never as a boolean status alone.
 6. Release cadence is fourteen days, starting with v0.2.0.
+7. **(2026-09-17)** The v0.4 demand gate is one outside repository *and* one inbound
+   conversation, not fifty repositories. Amended at day 9 with the count at zero, before
+   the day-90 figure existed, for the reason recorded under §5 v0.4.
