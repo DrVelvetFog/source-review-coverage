@@ -15,8 +15,16 @@ Coding agents now write a large share of the changes that land on `main`. The qu
 auditors, security teams and maintainers are starting to ask is not "was this AI-written"
 but "what did the agent change, and did a person actually approve *that*". Today the
 answer is asserted by the forge that performed the merge, to a consumer who cannot check
-it. SLSA v1.2 Source Track L4 already requires two-party review of the final revision and
-explicitly leaves the mechanism undefined (§4 of the spec).
+it. SLSA v1.2 Source Track L4 already requires two-party review, and requires it of the
+*final revision submitted*. Its reference implementation, `slsa-framework/source-tool`,
+satisfies that with a `REVIEW_ENFORCED` control checking the repository's branch
+protection: pull requests required, an approval required, stale approvals dismissed,
+approval of the most recent push. That establishes the gate is configured. It does not
+establish that the bytes which landed are the bytes somebody approved, and a
+configuration check cannot — the two come apart whenever a branch merges without being
+up to date, and whenever a control reads today's settings for a revision merged under
+last month's. This is the outcome half, and it composes with theirs (raised with them as
+slsa-framework/source-tool#450).
 
 The buyer is an engineering organisation under that pressure: SOC 2 CC6.8, HIPAA
 164.312(b), EU AI Act Arts. 12 and 19, ISO 42001 assessors. The user is whoever owns the
@@ -148,8 +156,8 @@ GitHub before v0.5. Consolidating rv/ev/xv into this repository before there is 
 ## 8. Risks and what we do about them
 
 - **Incumbents**: GitHub artifact attestations, Chainguard, "SLSA for AI" efforts. We are
-  the predicate and verifier layer for a requirement SLSA published and left undefined;
-  compose with all of them, compete with none. The in-toto PR is the positioning move.
+  the predicate and verifier layer for a requirement SLSA's own tooling checks by
+  configuration; compose with all of them, compete with none. The in-toto PR is the positioning move.
 - **Silence**: fifty repositories may not come. That is what the demand test is for; the
   answer at day 90 is honest either way.
 - **Squash-heavy world**: most repositories squash, so the commercially relevant check is

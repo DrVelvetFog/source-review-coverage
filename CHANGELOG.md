@@ -14,7 +14,12 @@ lives in its type URI and changes on its own clock.
   have (dependents, code search, workflow-path search, and Marketplace installs recorded
   as asserted because a reader cannot reproduce them), the day-90 date of 2026-12-07, and
   what a count of callers does not establish. First datapoint, day 9: zero repositories
-  that are not mine. The v0.4 demand gate is amended in the same change, at day 9 and
+  that are not mine. The brief's positioning is corrected in the same change: SLSA's
+  reference tooling now satisfies the L4 review requirement with a configuration check
+  (`source-tool`'s `REVIEW_ENFORCED`), so "a requirement SLSA left undefined" was stale.
+  The true claim is narrower and stands better — a configuration check establishes the
+  gate, not what went through it, raised with them as `slsa-framework/source-tool#450`.
+  The v0.4 demand gate is amended in the same change, at day 9 and
   before any day-90 figure existed: one outside repository and one inbound conversation,
   not fifty repositories, recorded as brief decision 7 with the reasoning beside it. (#14)
 - Intake: issue templates (task, bug, specification question) that produce the backlog
