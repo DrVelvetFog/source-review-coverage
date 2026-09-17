@@ -65,7 +65,18 @@ with the date and the venue, so the count can be read against it.
 
 | Date | Venue | Link |
 |---|---|---|
-| — | not yet made | — |
+| 2026-09-17 | `slsa-framework/source-tool`, as an issue | [#450](https://github.com/slsa-framework/source-tool/issues/450) |
+
+The venue is a GitHub issue and not a mailing list because SLSA's `CONTRIBUTING.md` says
+the project is authored on GitHub issues, the OpenSSF SLSA list has eleven members and no
+topics, and `groups.google.com/g/slsa-discussion` cannot be read without signing in. The
+in-toto venue is held until in-toto/attestation#581 has an answer, so that a nudge and an
+ask do not arrive in the same week in front of the same people.
+
+The ask is a question about scope before it is anything else: whether revision-level
+evidence for `[Final revision approved]` belongs in `source-tool`, whose `REVIEW_ENFORCED`
+control establishes that the gate is configured. If it does, contributing there beats
+maintaining a parallel thing, and that answer is worth more than a caller.
 
 ---
 
