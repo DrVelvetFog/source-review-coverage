@@ -14,7 +14,9 @@ lives in its type URI and changes on its own clock.
   have (dependents, code search, workflow-path search, and Marketplace installs recorded
   as asserted because a reader cannot reproduce them), the day-90 date of 2026-12-07, and
   what a count of callers does not establish. First datapoint, day 9: zero repositories
-  that are not mine. (#14)
+  that are not mine. The v0.4 demand gate is amended in the same change, at day 9 and
+  before any day-90 figure existed: one outside repository and one inbound conversation,
+  not fifty repositories, recorded as brief decision 7 with the reasoning beside it. (#14)
 - Intake: issue templates (task, bug, specification question) that produce the backlog
   block unchanged, a pull-request template, `.github/labels.yml` with the labels the
   tracker uses, and `CONTRIBUTING.md` with the integration pull-request pattern, the

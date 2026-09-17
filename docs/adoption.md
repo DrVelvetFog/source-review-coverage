@@ -1,13 +1,19 @@
 # Adoption
 
-Fifty repositories using the Action is the demand test (brief §5, v0.4). This file
-carries the count and the method that produced it, updated on every release, so the
-day-90 number is read against a method fixed before the number existed and not chosen
+This file carries the count and the method that produced it, updated on every release, so
+the day-90 number is read against a method fixed before the number existed and not chosen
 after it.
 
 The decision at day 90 is build the paid GitHub App (v0.5) or keep the Action free and
 treat the lane as standing. Day 0 is 2026-09-08, the v0.2.0 release and the Marketplace
 listing. **Day 90 falls on 2026-12-07.**
+
+**The gate.** Fifty repositories was the original test (brief §5). It was amended on
+2026-09-17, at day 9, with the count at zero and before any day-90 figure existed:
+v0.5 needs **one repository that is not mine running the Action, and one inbound
+conversation**, and neither half alone. The reasoning is in the brief under §5 v0.4 and
+as decision 7; the timing is the point, because a gate amended after its number arrives
+is a gate that chose itself. Fifty is still what adoption would look like.
 
 ## The count
 
