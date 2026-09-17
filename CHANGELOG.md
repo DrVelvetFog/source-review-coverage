@@ -9,6 +9,12 @@ lives in its type URI and changes on its own clock.
 
 ### Added
 
+- `docs/adoption.md`: the demand test's count and the method that produces it, fixed
+  before the number exists. Four sources that need no instrumentation the Action does not
+  have (dependents, code search, workflow-path search, and Marketplace installs recorded
+  as asserted because a reader cannot reproduce them), the day-90 date of 2026-12-07, and
+  what a count of callers does not establish. First datapoint, day 9: zero repositories
+  that are not mine. (#14)
 - Intake: issue templates (task, bug, specification question) that produce the backlog
   block unchanged, a pull-request template, `.github/labels.yml` with the labels the
   tracker uses, and `CONTRIBUTING.md` with the integration pull-request pattern, the
