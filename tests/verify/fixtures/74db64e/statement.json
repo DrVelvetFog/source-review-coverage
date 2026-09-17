@@ -1,0 +1,58 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "refs/heads/main",
+      "digest": {
+        "gitCommit": "74db64e2392457fb2000dde5934074c2125252b5",
+        "gitTree": "c9bfad25cd02b72aff7cffe273d02620a9dc1f81"
+      }
+    }
+  ],
+  "predicateType": "https://drvelvetfog.github.io/source-review-coverage/v0.1",
+  "predicate": {
+    "approvals": [],
+    "checks": [],
+    "mergeTransform": {
+      "kind": "mergeCommit",
+      "reviewedHead": {
+        "digest": {
+          "gitCommit": "74db64e2392457fb2000dde5934074c2125252b5"
+        }
+      },
+      "baseAtMerge": {
+        "digest": {
+          "gitCommit": "51f3a9558e2dbba6eda1d5baf294f7e35010a8f0"
+        }
+      },
+      "parents": [
+        {
+          "digest": {
+            "gitCommit": "51f3a9558e2dbba6eda1d5baf294f7e35010a8f0"
+          }
+        },
+        {
+          "digest": {
+            "gitCommit": "1f1fcf9a9ad6f95054ac77f51af4f5426ece6319"
+          }
+        }
+      ],
+      "expectedTree": {
+        "digest": {
+          "gitTree": "c9bfad25cd02b72aff7cffe273d02620a9dc1f81"
+        }
+      },
+      "replayClean": true,
+      "strategy": "ort",
+      "gitVersion": "2.55.0"
+    },
+    "authorship": {
+      "declaredBy": "github-actions",
+      "agents": []
+    },
+    "objectFormat": "sha1",
+    "reviewCoverage": {
+      "result": "unverifiable"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "change-evidence/v0",
+  "object_format": "sha1",
+  "change": {
+    "tree_hash": "git-sha1:c9bfad25cd02b72aff7cffe273d02620a9dc1f81",
+    "parent_tree_hash": "git-sha1:b931ac3146a3875636c080d0a1be56c4c8fb7599",
+    "locators": {
+      "merged": "74db64e2392457fb2000dde5934074c2125252b5",
+      "merged_ref": "HEAD",
+      "reviewed_head": "74db64e2392457fb2000dde5934074c2125252b5",
+      "base": "51f3a9558e2dbba6eda1d5baf294f7e35010a8f0"
+    }
+  },
+  "authorship": {
+    "declared_by": "github-actions",
+    "agents": []
+  },
+  "checks": [],
+  "approvals": [],
+  "merge_transform": {
+    "kind": "merge_commit",
+    "parents": [
+      "51f3a9558e2dbba6eda1d5baf294f7e35010a8f0",
+      "1f1fcf9a9ad6f95054ac77f51af4f5426ece6319"
+    ],
+    "reviewed_head": "74db64e2392457fb2000dde5934074c2125252b5",
+    "base_at_merge": "51f3a9558e2dbba6eda1d5baf294f7e35010a8f0",
+    "expected_tree": "git-sha1:c9bfad25cd02b72aff7cffe273d02620a9dc1f81",
+    "replay_clean": true,
+    "strategy": "ort",
+    "git_version": "2.55.0"
+  },
+  "record_digest": "sha256:f8b99cdfe1bd93a3902f489b31b286948fc8e6dcd1577bcbba12769faf3554a2"
+}

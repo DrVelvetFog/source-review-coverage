@@ -53,13 +53,14 @@ direct push to `main` has no approval and says so. Details, inputs and outputs:
 
 ```bash
 gh run download <run-id> -n source-review-coverage-attestation -D att
-python tools/ceb.py verify att/record.json --statement att/statement.json \
-    --bundle att/statement.sigstore.json --signer-repo owner/name
+python tools/ceb.py verify-artifact att --repo /path/to/clone --signer-repo owner/name
 ```
 
-Python 3 and `git`; `pip install sigstore` for the signature check. The replay needs no
-network. Without `sigstore` the verifier reports `INCOMPLETE` rather than passing an
-unchecked claim. A runnable, offline walk-through is
+One command recomputes every claim and exits `0` verified, `1` unverified with the reason
+named, `2` incomplete, `3` malformed. Python 3 and `git`; `pip install sigstore` for the
+signature check. The replay needs no network and does not write to your clone. Without
+`sigstore` the verifier reports `INCOMPLETE` rather than passing an unchecked claim.
+Details: [docs/verify.md](docs/verify.md). A runnable, offline walk-through is
 [examples/quickstart.sh](examples/quickstart.sh); its execution is attested in
 [examples/attest.json](examples/attest.json) so an agent can check it instead of recalling it.
 
