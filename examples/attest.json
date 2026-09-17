@@ -15,7 +15,7 @@
    "predicate": {
     "id": "quickstart",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash examples/quickstart.sh",
     "exit": 0,
     "stdout": {
@@ -23,7 +23,7 @@
      "bytes": 226,
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
-    "ran_at": "2026-09-11T12:34:15Z",
+    "ran_at": "2026-09-17T15:11:21Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -45,7 +45,7 @@
    "predicate": {
     "id": "approval-tests",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tests/action/test_approvals.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
@@ -53,7 +53,7 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-11T12:34:21Z",
+    "ran_at": "2026-09-17T15:11:27Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -75,7 +75,7 @@
    "predicate": {
     "id": "comment-tests",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tests/comment/test_render_comment.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
@@ -83,7 +83,7 @@
      "bytes": 20,
      "tail": "passed 14, failed 0\n"
     },
-    "ran_at": "2026-09-11T12:34:23Z",
+    "ran_at": "2026-09-17T15:11:29Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -105,7 +105,7 @@
    "predicate": {
     "id": "octopus-replay-tests",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tests/replay/test_octopus_replay.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
@@ -113,7 +113,7 @@
      "bytes": 19,
      "tail": "passed 5, failed 0\n"
     },
-    "ran_at": "2026-09-11T12:34:24Z",
+    "ran_at": "2026-09-17T15:11:30Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -135,7 +135,7 @@
    "predicate": {
     "id": "check-run-tests",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tests/check/test_render_check.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
@@ -143,7 +143,7 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-11T12:34:26Z",
+    "ran_at": "2026-09-17T15:11:32Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -165,15 +165,15 @@
    "predicate": {
     "id": "release-check",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tools/release_check.sh",
     "exit": 0,
     "stdout": {
-     "sha256": "c600d3cfa3bdc3018b9e2ac285a876d807d63ae33092f9a6cee8fbbd1bc2daa2",
-     "bytes": 351,
-     "tail": "ding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.2.1\n  \u2713 changelog                    PASS  newest entry [0.2.1], unreleased entries pending\nrelease check: PASS\n"
+     "sha256": "d2b00f41af0da1d8d732164773ec72ce221ecb68473bc75cec56292fc8c21a5f",
+     "bytes": 323,
+     "tail": "ASS  present\n  \u2713 action branding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.3.0\n  \u2713 changelog                    PASS  newest entry [0.3.0]\nrelease check: PASS\n"
     },
-    "ran_at": "2026-09-11T12:34:26Z",
+    "ran_at": "2026-09-17T15:11:32Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
@@ -195,7 +195,7 @@
    "predicate": {
     "id": "verify-artifact-tests",
     "package": "source-review-coverage",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "command": "bash tests/verify/test_verify_artifact.sh 2>/dev/null | tail -1",
     "exit": 0,
     "stdout": {
@@ -203,7 +203,7 @@
      "bytes": 35,
      "tail": "passed 15, failed 0 (sigstore: no)\n"
     },
-    "ran_at": "2026-09-11T12:34:28Z",
+    "ran_at": "2026-09-17T15:11:34Z",
     "runner": {
      "os": "darwin",
      "python": "3.14.6",
