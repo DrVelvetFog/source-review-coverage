@@ -101,6 +101,13 @@ lives in its type URI and changes on its own clock.
   change; every consumer's run stops printing the deprecation warning. Self-hosted
   runners need 2.327.1 or newer. (#26)
 
+### Security
+
+- The Action and this repository's workflows now pin `actions/checkout` and
+  `actions/upload-artifact` to full commit SHAs (both `v7.0.1`) instead of the moving
+  `@v7` tag. The Action runs inside other people's CI, so a retagged upstream release
+  would otherwise run there unreviewed. The version stays readable as a trailing comment.
+
 ## [0.2.1] - 2026-09-08
 
 ### Changed
