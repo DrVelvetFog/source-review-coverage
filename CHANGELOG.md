@@ -7,6 +7,8 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-22
+
 ### Added
 
 - `docs/adoption.md`: the demand test's count and the method that produces it, fixed
