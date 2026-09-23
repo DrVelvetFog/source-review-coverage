@@ -23,10 +23,10 @@
      "bytes": 226,
      "tail": "AIL \u2014 residual \u2014 bytes shipped that are not the automatic merge of the reviewed head\napproval binding: FAIL \u2014 residual \u2014 bytes shipped beyond what reviewer approved\nresidual:\n  +e\nverdict: UNVERIFIED\n"
     },
-    "ran_at": "2026-09-17T15:11:21Z",
+    "ran_at": "2026-09-23T13:16:17Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -53,10 +53,10 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-17T15:11:27Z",
+    "ran_at": "2026-09-23T13:16:23Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -83,10 +83,10 @@
      "bytes": 20,
      "tail": "passed 14, failed 0\n"
     },
-    "ran_at": "2026-09-17T15:11:29Z",
+    "ran_at": "2026-09-23T13:16:25Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -113,10 +113,10 @@
      "bytes": 19,
      "tail": "passed 5, failed 0\n"
     },
-    "ran_at": "2026-09-17T15:11:30Z",
+    "ran_at": "2026-09-23T13:16:26Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -143,10 +143,10 @@
      "bytes": 20,
      "tail": "passed 16, failed 0\n"
     },
-    "ran_at": "2026-09-17T15:11:32Z",
+    "ran_at": "2026-09-23T13:16:28Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -169,14 +169,14 @@
     "command": "bash tools/release_check.sh",
     "exit": 0,
     "stdout": {
-     "sha256": "d2b00f41af0da1d8d732164773ec72ce221ecb68473bc75cec56292fc8c21a5f",
-     "bytes": 323,
-     "tail": "ASS  present\n  \u2713 action branding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.3.0\n  \u2713 changelog                    PASS  newest entry [0.3.0]\nrelease check: PASS\n"
+     "sha256": "d85c8ae51c03800d02d5dcbf248a29bca42cde8022d910461749370ed766d59b",
+     "bytes": 351,
+     "tail": "ding              PASS  icon and color present\n  \u2713 VERSION                      PASS  0.3.0\n  \u2713 changelog                    PASS  newest entry [0.3.0], unreleased entries pending\nrelease check: PASS\n"
     },
-    "ran_at": "2026-09-17T15:11:32Z",
+    "ran_at": "2026-09-23T13:16:28Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
@@ -203,10 +203,10 @@
      "bytes": 35,
      "tail": "passed 15, failed 0 (sigstore: no)\n"
     },
-    "ran_at": "2026-09-17T15:11:34Z",
+    "ran_at": "2026-09-23T13:16:31Z",
     "runner": {
      "os": "darwin",
-     "python": "3.14.6",
+     "python": "3.14.7",
      "ci": false
     }
    }
