@@ -7,6 +7,14 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+### Added
+
+- `PLANS/V1/DECISIONS/0001-feeders.md`: the consolidation decision for the runtime feeders
+  (`rv`, `ev`, `xv`), recorded rather than left to drift. They stay separate MIT
+  repositories, pinned by version where this repository depends on one, because the Action
+  a consumer runs depends on none of them. The record names the three triggers that would
+  reverse it. (#16)
+
 ## [0.3.0] - 2026-09-22
 
 ### Added
