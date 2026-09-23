@@ -63,10 +63,10 @@ review and why the fifty-repository test (CE-014) is the real one.
 
 ## Friction found
 
-- **Node 20 deprecation warnings** on every run. The action pins `actions/checkout@v4` and
-  `actions/upload-artifact@v4`, both of which declare Node 20; the runner now forces them
-  onto Node 24 and says so. Harmless today, noisy on every consumer's run, and the
-  forcing will not last. Fix: pin the majors that declare Node 24. Filed as CE-018.
+- **Node 20 deprecation warnings** on every run. The action pinned `actions/checkout@v4`
+  and `actions/upload-artifact@v4`, both of which declare Node 20; the runner forced them
+  onto Node 24 and said so — noisy on every consumer's run. Fixed in CE-018: both are now
+  pinned to `v7` (Node 24) by commit SHA, shipped in 0.3.0, and the warning is gone.
 - **Two workflow shapes are in circulation.** The three repositories use the sixteen-line
   file above (`pull-requests: read`, no `pull_request_review` trigger).
   [docs/action.md](action.md) shows the fuller one, which re-runs when a review lands and
