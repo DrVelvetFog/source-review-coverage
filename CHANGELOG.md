@@ -7,6 +7,8 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-06
+
 ### Added
 
 - `PLANS/V1/DECISIONS/0001-feeders.md`: the consolidation decision for the runtime feeders
