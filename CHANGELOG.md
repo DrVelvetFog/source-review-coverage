@@ -7,6 +7,8 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-22
+
 ### Added
 
 - `PLANS/V1/DESIGN/org-report.md`: the organisation-wide coverage report, designed and
