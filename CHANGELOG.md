@@ -7,6 +7,17 @@ lives in its type URI and changes on its own clock.
 
 ## [Unreleased]
 
+### Added
+
+- `PLANS/V1/DESIGN/org-report.md`: the organisation-wide coverage report, designed and
+  not built. Data model (content-addressed attestation files plus one derived index row,
+  residual diffs digest-only by default), ingest that recomputes every file with the
+  existing verifier before indexing it, hosting inside the two accounts that already
+  exist, Marketplace per-private-repository billing with public repositories free end to
+  end, and retention aligned to EU AI Act Article 19's floor without claiming anyone
+  compliant. Three open questions are pre-registered with the conditions that decide
+  them. The build stays gated on the day-90 demand test. (#17)
+
 ## [0.4.0] - 2026-10-06
 
 ### Added
